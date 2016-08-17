@@ -1,0 +1,99 @@
+package com.resurf.graph
+
+import org.graphstream.graph.Element
+import org.graphstream.graph.implementations.{ MultiNode, AbstractNode, AbstractEdge, AbstractGraph }
+import java.lang
+import scala.collection.JavaConverters._
+import com.twitter.util.Duration
+import com.resurf.common._
+
+/**
+ * A custom graph element trait for the referrer graph
+ * All ReSurfElements have a request repository
+ */
+trait ReSurfElement extends Element {
+	val requestRepo = new RequestRepository()
+}
+
+/**
+ * A resurf node represents a URI (URI could have been the target of a request, a referrer, or both)
+ * Resurf node extends the basic graphstream MultiNode class and the custom graph element trait ReSurfElement. The RequestRepository of a ReSurfNode
+ * stores all requests with the specific node as the target (regardless of whether the request had a referrer or not)
+ *
+ * @constructor create a new resurf node
+ * @param graph
+ * @param id
+ */
+class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: AbstractGraph, id: String) with ReSurfElement {
+
+	/**
+	 * The average time gap between requests targeting this node and requests targeting parent nodes (referrers)
+	 *
+	 */
+	def timeGapAvg: Option[Duration] = {
+		//incoming requests to parent of node including those without referrer
+		val reqsToParentNodes = getParentNodeSet.toList.flatMap { node => node.requestRepo.getRepo }
+		//incoming requests excluding those without referrer (since these won't be able to be matched)
+		val reqsToNodeSorted = getEnteringEdgeSet[ReSurfEdge].asScala.flatMap { edge => edge.requestRepo.getRepo }.toSeq.sorted
+		(!reqsToParentNodes.isEmpty && !reqsToNodeSorted.isEmpty) match {
+			case false => None
+			case true =>
+				reqsToParentNodes.flatMap { parentReq => RequestRepository.getDurationToNextRequest(parentReq, reqsToNodeSorted) } match {
+					case Nil => None
+					case k: Seq[Duration] => Some(averageDuration(k))
+				}
+		}
+	}
+
+	/**
+	 * The content type of this node
+	 * The content type is calculated as the mode of content types specified by requests targeting this node
+	 */
+	def contentTypeMode: Option[String] = requestRepo.isEmtpy match {
+		case true => None
+		case false => listMode(requestRepo.getRepo.flatMap(_.contentType))
+	}
+
+	/**
+	 * The parameters of this node
+	 * The parameters is calculated as the mode of parameters specified by requests targeting this node
+	 */
+	def parametersMode: Option[String] = requestRepo.isEmtpy match {
+		case true => None
+		case false => listMode(requestRepo.getRepo.flatMap(_.parameters))
+	}
+
+	/**
+	 * The content size of this node
+	 * The content size is calculated as the average of content sizes specified by replies of requests targeting this node
+	 */
+	def contentSizeAvg: Option[Double] = requestRepo.isEmtpy match {
+		case true => None
+		case false => {
+			val sizes = requestRepo.getRepo.flatMap(_.size)
+			sizes match {
+				case Nil => None
+				case sizesn: List[Int] => Some((sizesn.sum.toDouble) / (sizesn.size.toDouble))
+			}
+		}
+	}
+
+	/**  Get the set of children nodes of this node (nodes for which this node is a referrer) */
+	def getChildNodeSet: Set[ReSurfNode] = { getLeavingEdgeSet[ReSurfEdge].asScala.map { edge => edge.getTargetNode[ReSurfNode] }.toSet }
+	/**  Get the set of parents nodes of this node (nodes that are referrers of this node) */
+	def getParentNodeSet: Set[ReSurfNode] = { getEnteringEdgeSet[ReSurfEdge].asScala.map { edge => edge.getSourceNode[ReSurfNode] }.toSet }
+
+}
+
+/**
+ * A resurf edge represents a request with a specific target and specific referrer
+ * Resurf edge extends the basic graphstream AbstractEdge class and the custom graph element trait ReSurfElement. The RequestRepository of a ReSurfEdge
+ * stores all requests with the specific target and referrer
+ *
+ * @constructor create a new resurf edge
+ * @param id
+ * @param source
+ * @param target
+ * @param directed
+ */
+class ReSurfEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) with ReSurfElement
