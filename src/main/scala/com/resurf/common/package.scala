@@ -4,7 +4,7 @@ import com.twitter.util.{Duration, Time}
 import java.net.URLDecoder
 import com.twitter.conversions.time._
 
-/** Contains common utility methods */
+/** Contains common utility methods and Constants */
 package object common {
 	
 	val VALID_HEADNODE_CONTENT_TYPES = Set("text/html","text/xhtml","text/xml","application/xhtml","application/xml")
@@ -22,8 +22,8 @@ package object common {
 
   def getCurrentTime = Time.now
   
-  /** Calculates the mode of a Iterable of objects
-   * @param list the Iterable of objects
+  /** Calculates the mode of an collection of objects
+   * @param list the collection of objects
    * @return the mode object
    */
   def listMode[T](list:Iterable[T]):Option[T] = {
@@ -34,15 +34,15 @@ package object common {
   	
   }
 
-  /** Calculates the average Duration from a sequence of Durations 
-   * @param data the sequence of Durations 
-   * @return the average Duration
+  /** Calculates the average duration from a sequence of durations 
+   * @param data the sequence of durations 
+   * @return the average duration
    */
   def averageDuration(data: Seq[Duration]): Duration = Duration.fromNanoseconds(data.map(_.inNanoseconds).sum / data.size)
     
- /** Prepares URL string for comparison against other URL string by decoding the URL encoding, downcasing, and finally striping trailing slashes
+ /** Prepares a URL string for comparison against other URL string by decoding the URL encoding, downcasing, and finally striping trailing slashes
   *  @param str the URL string to prepare
   *  @return the prepared URL string
   */
-  def unifyURLString(str:String):String = URLDecoder.decode(str, "UTF-8").toLowerCase().stripSuffix("/")
+  def prepareURLString(str:String):String = URLDecoder.decode(str, "UTF-8").toLowerCase().stripSuffix("/")
 }

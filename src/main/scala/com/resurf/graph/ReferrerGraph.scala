@@ -9,26 +9,13 @@ import org.graphstream.algorithm.ConnectedComponents
 import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
-/** An abstract class representation of a referrer graph */
-abstract class RGraphLike {
-  def addNode(nodeId: String, details: Option[RequestSummary])
-
-  def addLink(srcId: String, dstId: String, details: RequestSummary)
-
-  def getLinkIdAsString(src: String, dst: String) = s"$src->$dst"
-
-  def processRequest(newEvent: WebRequest): Unit
-  
-  def getHeadNodes:Iterable[ReSurfNode]
-}
-
-/** This class provides an implementation of a referrer graph.
+/** This class provides a representation of a referrer graph.
  	* Typically there will be one referrer graph for each device or IP address, etc.
   * 
   * @constructor create a new referrer graph with the specified identifier
   * @param id the identifier
   */
-class ReferrerGraph(id: String) extends RGraphLike {
+class ReferrerGraph(id: String) {
 
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   //the internal graphstream multigraph that holds our custom nodes and edges
@@ -47,13 +34,15 @@ class ReferrerGraph(id: String) extends RGraphLike {
       new ReSurfEdge(id, src.asInstanceOf[AbstractNode], dst.asInstanceOf[AbstractNode], directed)
     }
   });
+  
+  def getLinkIdAsString(src: String, dst: String) = s"$src->$dst"
 
 	/** Add a node to the referrer graph based on the specified RequestSummary
-  *
-  * @param nodeId the id of the node (typically the URL of the request)
-  * @param details the request summary object of the request
-  */
-  override def addNode(nodeId: String, details: Option[RequestSummary] = None) = {
+    *
+    * @param nodeId the id of the node (typically the URL of the request)
+    * @param details the request summary object of the request
+    */
+   def addNode(nodeId: String, details: Option[RequestSummary] = None):Unit = {
     details match {
       case None =>
         internalGraph.addNode(nodeId)
@@ -73,12 +62,12 @@ class ReferrerGraph(id: String) extends RGraphLike {
   }
 
  /** Add a link to the referrer graph based on the specified source node, destination node, and request
-  *
-  * @param srcId the id of the source node (typically the referrer URI of the request)
-  * @param dstId the id of the destination node (typically the target URI of the request)
-  * @param details the request summary object of the request
-  */
-  override def addLink(srcId: String, dstId: String, details: RequestSummary) = {
+   *
+   * @param srcId the id of the source node (typically the referrer URI of the request)
+   * @param dstId the id of the destination node (typically the target URI of the request)
+   * @param details the request summary object of the request
+   */
+   def addLink(srcId: String, dstId: String, details: RequestSummary) = {
     logger.debug(s"Adding edge from $srcId to $dstId")
     val edgeId = getLinkIdAsString(srcId, dstId)
     this.addNode(srcId)
@@ -100,13 +89,13 @@ class ReferrerGraph(id: String) extends RGraphLike {
   }
 
  /** Get the nodes of the referrer graph
-  * @return the nodes of the referrer graph
-  */
+   * @return the nodes of the referrer graph
+   */
   //def getInternalNodes = internalGraph.getEachNode[ReSurfNode].asScala
 
  /** Get a summary of the referrer graph
-  * @return a graph summary for the referrer graph
-  */
+   * @return a graph summary for the referrer graph
+   */
   def getGraphSummary: GraphSummary = {
     val cc = new ConnectedComponents()
     cc.init(internalGraph)
@@ -117,9 +106,9 @@ class ReferrerGraph(id: String) extends RGraphLike {
   def viz = internalGraph.display()
 
  /** Processes the specified web request by creating the specific node(s) and link in the referrer graph
-  * @param newEvent the HTTP request to process
-  */
-  override def processRequest(newEvent: WebRequest) = {
+   * @param newEvent the HTTP request to process
+   */
+   def processRequest(newEvent: WebRequest) = {
   	//Deal with HTTP redirection 302 statuses ????
     val referrer = newEvent.referrer
     referrer match {
@@ -135,7 +124,7 @@ class ReferrerGraph(id: String) extends RGraphLike {
 /** Get the nodes that are considered head nodes through the ReSurf methodology 
   * @return the head nodes
   */
-  override def getHeadNodes:Iterable[ReSurfNode] = {
+   def getHeadNodes:Iterable[ReSurfNode] = {
   
    val nodes = internalGraph.getNodeSet[ReSurfNode].asScala
     var total_HN = Set[ReSurfNode]()
