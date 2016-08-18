@@ -88,11 +88,6 @@ class ReferrerGraph(id: String) {
     }
   }
 
- /** Get the nodes of the referrer graph
-   * @return the nodes of the referrer graph
-   */
-  //def getInternalNodes = internalGraph.getEachNode[ReSurfNode].asScala
-
  /** Get a summary of the referrer graph
    * @return a graph summary for the referrer graph
    */
@@ -121,23 +116,26 @@ class ReferrerGraph(id: String) {
     }
   }
   
+  private def candidateHNCriteria(node:ReSurfNode):Boolean = {
+  	VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse("text/html")) && 
+    	node.contentSizeAvg.getOrElse(Double.MaxValue) >= MIN_OBJECT_SIZE && 
+    	node.getOutDegree >= MIN_EMBEDDED_OBJECTS &&
+    	node.timeGapAvg.getOrElse(Duration.Top) >= MIN_PASS_THROUGH_DELAY && 
+    	(!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains))
+  }
+  
 /** Get the nodes that are considered head nodes through the ReSurf methodology 
   * @return the head nodes
   */
    def getHeadNodes:Iterable[ReSurfNode] = {
   
-   val nodes = internalGraph.getNodeSet[ReSurfNode].asScala
+    val nodes = internalGraph.getNodeSet[ReSurfNode].asScala
     var total_HN = Set[ReSurfNode]()
     
     val initial_HN = 
     	nodes.filter{node =>
-    	VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse("text/html")) && 
-    	node.contentSizeAvg.getOrElse(Double.MaxValue) >= MIN_OBJECT_SIZE && 
-    	node.getOutDegree >= MIN_EMBEDDED_OBJECTS &&
-    	node.timeGapAvg.getOrElse(Duration.Top) >= MIN_PASS_THROUGH_DELAY && 
-    	(!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains)) &&
-    	//check to make sure that has no parent nodes
-    	node.getInDegree == 0
+    	//check to make sure that node has no referrer (parent node)
+    	candidateHNCriteria(node) && node.getInDegree == 0
     }.toSet
 		
 		var last_HN = initial_HN
@@ -147,13 +145,8 @@ class ReferrerGraph(id: String) {
 		val children_of_last_HN = last_HN.flatMap{node => node.getChildNodeSet}.toSet
 				
     last_HN = children_of_last_HN.filter{node =>
-    	VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse("text/html")) && 
-    	node.contentSizeAvg.getOrElse(Double.MaxValue) >= MIN_OBJECT_SIZE && 
-    	node.getOutDegree >= MIN_EMBEDDED_OBJECTS &&
-    	node.timeGapAvg.getOrElse(Duration.Top) >= MIN_PASS_THROUGH_DELAY && 
-    	(!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains)) &&
-    	//check to make sure at least one of the parent nodes is in the total HN set
-    	total_HN.intersect(node.getParentNodeSet).size > 0
+    	//check to make sure at least one of the referrer (parent) nodes is a head node
+    	candidateHNCriteria(node) && total_HN.intersect(node.getParentNodeSet).size > 0
     }.toSet
     total_HN ++= last_HN
 		}
