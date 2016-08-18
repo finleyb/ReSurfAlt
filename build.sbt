@@ -14,7 +14,6 @@ scalacOptions ++= Seq("-unchecked", "-deprecation")
 seq(clojure.settings :_*)
 
 resolvers ++= Seq(
-    "clojars.org" at "http://clojars.org/repo/",
     "maven.org" at "http://repo.maven.apache.org/",
     "twitter" at "http://maven.twttr.com/"
 )
@@ -26,16 +25,14 @@ lazy val slf4jDependencies = Seq(
 )
 
 libraryDependencies ++= Seq(
-     // Support for clojure
-     "org.clojure" % "clojure" % "1.5.1",
      // Using the ScalaTest library (only for testing)
      "org.scalatest" %% "scalatest" % "2.2.1" % "test",
      // Using the very useful utils by twitter
      "com.twitter" %% "util-collection" % "6.12.1",
      // Processing JSON
-     "org.json4s" %% "json4s-jackson" % "3.2.11",
+     //"org.json4s" %% "json4s-jackson" % "3.2.11",
      // Reactive
-     "com.netflix.rxjava" % "rxjava-scala" % "0.19.1", 
+     //"com.netflix.rxjava" % "rxjava-scala" % "0.19.1", 
      // Manipulating in memory Graphs
      "org.graphstream" % "gs-core" %  "1.2",
      "org.graphstream" % "gs-algo" %  "1.1" ) ++ slf4jDependencies
