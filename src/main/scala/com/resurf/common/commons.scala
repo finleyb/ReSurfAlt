@@ -10,7 +10,7 @@ import com.twitter.util.{Duration, Time}
  * @param contentType the content-type of the request
  * @param size the content size of the reply of the request
  */
-case class RequestSummary(ts: Time, method: String, parameters: Option[String], contentType: Option[String] = None, size: Option[Int] = None)
+final case class RequestSummary(ts: Time, method: String, parameters: Option[String], contentType: Option[String] = None, size: Option[Int] = None)
   extends Comparable[RequestSummary] {
   override def compareTo(o: RequestSummary): Int = ts.compareTo(o.ts)
 }
@@ -24,7 +24,7 @@ case class RequestSummary(ts: Time, method: String, parameters: Option[String], 
  * @param size the content size of the reply of the request
  * @param rawContent the raw content of the request
  */
-case class WebRequest(ts: Time, method: String, url: URL, referrer: Option[URL],contentType: String, size: Int, rawContent: Option[String] = None) {
+final case class WebRequest(ts: Time, method: String, url: URL, referrer: Option[URL],contentType: String, size: Int, rawContent: Option[String] = None) {
   def getSummary: RequestSummary = RequestSummary(ts, method, Option(url.getQuery), Some(contentType),Some(size))
 }
 
@@ -33,4 +33,4 @@ case class WebRequest(ts: Time, method: String, url: URL, referrer: Option[URL],
  * @param linkCount the number of links of the graph
  * @param connectedComponentCount the number of connected components of the graph
  */
-case class GraphSummary(nodeCount: Int, linkCount: Int, connectedComponentCount: Int)
+final case class GraphSummary(nodeCount: Int, linkCount: Int, connectedComponentCount: Int)

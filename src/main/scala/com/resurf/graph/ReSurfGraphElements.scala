@@ -33,13 +33,13 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
 	 */
 	def timeGapAvg: Option[Duration] = {
 		//incoming requests to parent of node including those without referrer
-		val reqsToParentNodes = getParentNodeSet.toList.flatMap { node => node.requestRepo.getRepo }
+		val reqsToParentNodes = parentNodeSet.toList.flatMap { node => node.requestRepo.getRepo }
 		//incoming requests excluding those without referrer (since these won't be able to be matched)
 		val reqsToNodeSorted = getEnteringEdgeSet[ReSurfEdge].asScala.flatMap { edge => edge.requestRepo.getRepo }.toSeq.sorted
 		(!reqsToParentNodes.isEmpty && !reqsToNodeSorted.isEmpty) match {
 			case false => None
 			case true =>
-				reqsToParentNodes.flatMap { parentReq => RequestRepository.getDurationToNextRequest(parentReq, reqsToNodeSorted) } match {
+				reqsToParentNodes.flatMap { parentReq => RequestRepository.getDurationToNextRequest(parentReq, reqsToNodeSorted).toList } match {
 					case Nil => None
 					case k: Seq[Duration] => Some(averageDuration(k))
 				}
@@ -54,7 +54,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
 	 */
 	def contentTypeMode: Option[String] = requestRepo.isEmtpy match {
 		case true => None
-		case false => listMode(requestRepo.getRepo.flatMap(_.contentType))
+		case false => listMode(requestRepo.getRepo.flatMap(_.contentType.toList))
 	}
 
 	/** The parameters of this node
@@ -65,7 +65,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
 	 */
 	def parametersMode: Option[String] = requestRepo.isEmtpy match {
 		case true => None
-		case false => listMode(requestRepo.getRepo.flatMap(_.parameters))
+		case false => listMode(requestRepo.getRepo.flatMap(_.parameters.toList))
 	}
 
 	/** The content size of this node
@@ -77,7 +77,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
 	def contentSizeAvg: Option[Double] = requestRepo.isEmtpy match {
 		case true => None
 		case false => {
-			val sizes = requestRepo.getRepo.flatMap(_.size)
+			val sizes = requestRepo.getRepo.flatMap(_.size.toList)
 			sizes match {
 				case Nil => None
 				case sizesn: List[Int] => Some((sizesn.sum.toDouble) / (sizesn.size.toDouble))
@@ -85,22 +85,22 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
 		}
 	}
 
-	/**  Get the set of children nodes of this node (nodes for which this node is a referrer) 
-	 *   
-	 *   @return the set of children nodes of this node
+	/** Get the set of children nodes of this node (nodes for which this node is a referrer) 
+	 *
+	 * @return the set of children nodes of this node
 	 */
-	def getChildNodeSet: Set[ReSurfNode] = { getLeavingEdgeSet[ReSurfEdge].asScala.map { edge => edge.getTargetNode[ReSurfNode] }.toSet }
+	def childNodeSet: Set[ReSurfNode] = { getLeavingEdgeSet[ReSurfEdge].asScala.map { edge => edge.getTargetNode[ReSurfNode] }.toSet }
 	
 	/**  Get the set of parents nodes of this node (nodes that are referrers of this node) 
 	 *   
 	 *   @return the set of parent nodes of this node
 	 */
-	def getParentNodeSet: Set[ReSurfNode] = { getEnteringEdgeSet[ReSurfEdge].asScala.map { edge => edge.getSourceNode[ReSurfNode] }.toSet }
+	def parentNodeSet: Set[ReSurfNode] = { getEnteringEdgeSet[ReSurfEdge].asScala.map { edge => edge.getSourceNode[ReSurfNode] }.toSet }
 
 }
 
-/** A class representing an edge in a ReSurf referrer graph. 
- *  
+/** A class representing an edge in a ReSurf referrer graph.
+ *
  * Each edge in a ReSurf referrer graph represents a request with a specific target and specific referrer.
  * ResurfEdge extends the basic graphstream AbstractEdge class and the graph element trait ReSurfElement. The RequestRepository of a ReSurfEdge
  * stores all requests with the specific target and referrer.
@@ -111,4 +111,5 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
  * @param target the id of the target node
  * @param directed whether the node is directed
  */
-class ReSurfEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) with ReSurfElement
+class ReSurfEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) extends
+AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) with ReSurfElement

@@ -50,13 +50,14 @@ class ReferrerGraph(id: String) {
       case Some(request) =>
         logger.debug(s"Adding node $nodeId with details $details")
         //node is not in internalGraph
-        val node = internalGraph.getNode[ReSurfNode](nodeId)
-        if (node == null) {
-          logger.debug("First time seeing node: {}", nodeId)
-          this.addNode(nodeId)
-          internalGraph.getNode[ReSurfNode](nodeId).requestRepo.add(request)
-        } else {
-          node.requestRepo.add(request)
+        val node = Option(internalGraph.getNode[ReSurfNode](nodeId))
+        node match {
+        	case None =>
+	          logger.debug("First time seeing node: {}", nodeId)
+	          this.addNode(nodeId)
+	          internalGraph.getNode[ReSurfNode](nodeId).requestRepo.add(request)
+        	case Some(node) =>
+          	node.requestRepo.add(request)
         }
     }
   }
@@ -67,24 +68,24 @@ class ReferrerGraph(id: String) {
    * @param dstId the id of the destination node (typically the target URI of the request)
    * @param details the request summary object of the request
    */
-   def addLink(srcId: String, dstId: String, details: RequestSummary) = {
+   def addLink(srcId: String, dstId: String, details: RequestSummary):Unit = {
     logger.debug(s"Adding edge from $srcId to $dstId")
     val edgeId = getLinkIdAsString(srcId, dstId)
     this.addNode(srcId)
     //nodes store their incoming requests as the repository
     this.addNode(dstId, Some(details))
     // Gets the edge if it exists, else it returns null
-    val edge = internalGraph.getEdge[ReSurfEdge](edgeId)
+    val edge = Option(internalGraph.getEdge[ReSurfEdge](edgeId))
     //if the edge (link) does not exist then create it!
-    if (edge == null) {
-      logger.debug(s"New edge from $srcId to $dstId")
-      internalGraph.addEdge(edgeId.toString, srcId, dstId, true)
-      val e = internalGraph.getEdge[ReSurfEdge](edgeId.toString)
-      assert(e != null, "Edge was just added, it should not be null")
-      e.requestRepo.add(details)
+    match {
+    	case None => 
+	      logger.debug(s"New edge from $srcId to $dstId")
+	      internalGraph.addEdge(edgeId.toString, srcId, dstId, true)
+	      val e = internalGraph.getEdge[ReSurfEdge](edgeId.toString)
+	      e.requestRepo.add(details)
       //else add the request summary to the link's request repo
-    } else {
-      edge.requestRepo.add(details)
+    	case Some(edge) =>
+      	edge.requestRepo.add(details)
     }
   }
 
@@ -127,30 +128,30 @@ class ReferrerGraph(id: String) {
 /** Get the nodes that are considered head nodes through the ReSurf methodology 
   * @return the head nodes
   */
-   def getHeadNodes:Iterable[ReSurfNode] = {
-  
+   def getHeadNodes:Set[ReSurfNode] = {
+
     val nodes = internalGraph.getNodeSet[ReSurfNode].asScala
     var total_HN = Set[ReSurfNode]()
-    
+
     val initial_HN = 
     	nodes.filter{node =>
     	//check to make sure that node has no referrer (parent node)
     	candidateHNCriteria(node) && node.getInDegree == 0
     }.toSet
-		
+
 		var last_HN = initial_HN
 		total_HN ++= last_HN
-		
+
 		while(last_HN.size > 0){
-		val children_of_last_HN = last_HN.flatMap{node => node.getChildNodeSet}.toSet
-				
+		val children_of_last_HN = last_HN.flatMap{node => node.childNodeSet}.toSet
+
     last_HN = children_of_last_HN.filter{node =>
     	//check to make sure at least one of the referrer (parent) nodes is a head node
-    	candidateHNCriteria(node) && total_HN.intersect(node.getParentNodeSet).size > 0
+    	candidateHNCriteria(node) && total_HN.intersect(node.parentNodeSet).size > 0
     }.toSet
     total_HN ++= last_HN
 		}
     total_HN
   }
-  
+
 }
