@@ -120,7 +120,7 @@ class ReferrerGraph(id: String) {
   private def candidateHNCriteria(node:ReSurfNode):Boolean = {
   	VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse("text/html")) && 
     	node.contentSizeAvg.getOrElse(Double.MaxValue) >= MIN_OBJECT_SIZE && 
-    	node.getOutDegree >= MIN_EMBEDDED_OBJECTS &&
+    	node.outDegreeWithOutSelfLoop >= MIN_EMBEDDED_OBJECTS &&
     	node.timeGapAvg.getOrElse(Duration.Top) >= MIN_PASS_THROUGH_DELAY && 
     	(!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains))
   }
@@ -133,17 +133,19 @@ class ReferrerGraph(id: String) {
     val nodes = internalGraph.getNodeSet[ReSurfNode].asScala
     var total_HN = Set[ReSurfNode]()
 
-    val initial_HN = 
-    	nodes.filter{node =>
+    val initial_HN = nodes.filter{node =>
     	//check to make sure that node has no referrer (parent node)
-    	candidateHNCriteria(node) && node.getInDegree == 0
+    	candidateHNCriteria(node) && node.inDegreeWithOutSelfLoop == 0
     }.toSet
 
 		var last_HN = initial_HN
 		total_HN ++= last_HN
 
 		while(last_HN.size > 0){
-		val children_of_last_HN = last_HN.flatMap{node => node.childNodeSet}.toSet
+		
+		//get the candidate children and make sure the candidate children are not already head nodes 
+		//(this could happen in case of graph cycle or self-loop)
+		val children_of_last_HN = last_HN.flatMap{node => node.childNodeSet}.toSet.diff(total_HN)
 
     last_HN = children_of_last_HN.filter{node =>
     	//check to make sure at least one of the referrer (parent) nodes is a head node

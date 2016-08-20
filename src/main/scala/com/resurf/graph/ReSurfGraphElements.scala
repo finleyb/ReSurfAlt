@@ -84,6 +84,9 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
 			}
 		}
 	}
+	
+  def inDegreeWithOutSelfLoop = {(parentNodeSet - this).size}
+  def outDegreeWithOutSelfLoop = {(childNodeSet - this).size}
 
 	/** Get the set of children nodes of this node (nodes for which this node is a referrer) 
 	 *
