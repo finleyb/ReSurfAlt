@@ -26,6 +26,7 @@ import org.graphstream.algorithm.ConnectedComponents
 import org.graphstream.ui.view.Viewer
 import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
+import scalaz.Memo
 
 /**
  * This class provides a representation of a referrer graph.
@@ -157,7 +158,7 @@ class ReferrerGraph(id: String) {
 
   /**
    * Get the head node that each node maps to according to the ReSurf methodology.
-   * Headnodes naturally map to themselves. Nodes that are not head nodes and do not map to a 
+   * Headnodes naturally map to themselves. Nodes that are not head nodes and do not map to a
    * headnode are considered unknown and map to None.
    *
    * @return a map in the form (node => Option[headnode])
@@ -168,8 +169,9 @@ class ReferrerGraph(id: String) {
     val headNodes = getHeadNodes
 
     //define recursive function that traverses backward toward the head node
-    def traverseToHeadNode(node: Option[ReSurfNode]): Option[ReSurfNode] = {
-      node match {
+    lazy val traverseToHeadNode: Option[ReSurfNode] => Option[ReSurfNode] =
+      //use memoization from scalaz to improve performance
+      Memo.mutableHashMapMemo {
         case None => throw new Exception("A node along the chain is null, this should never happen!")
         case Some(node) => {
           //node is head node thus we found the headnode to map to! 
@@ -184,7 +186,6 @@ class ReferrerGraph(id: String) {
           } else { None }
         }
       }
-    }
 
     //find nodes that are not head nodes since we will follow these backwards to the headnodes
     val nonHeadNodes = internalGraph.getNodeSet[ReSurfNode].asScala.toSet.diff(headNodes)

@@ -29,6 +29,7 @@ libraryDependencies ++= Seq(
      "org.scalatest" %% "scalatest" % "3.0.0" % "test",
      // Using the very useful utils by twitter
      "com.twitter" %% "util-collection" % "6.35.0",
+     "org.scalaz" %% "scalaz-core" % "7.2.5",
      // Processing JSON
      //"org.json4s" %% "json4s-jackson" % "3.4.0",
      // Reactive
