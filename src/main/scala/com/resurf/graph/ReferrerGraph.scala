@@ -1,3 +1,20 @@
+/*
+ * This file is part of ReSurfAlt.
+ *
+ * ReSurfAlt is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ReSurfAlt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ReSurfAlt. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.resurf.graph
 
 import java.lang
@@ -6,7 +23,7 @@ import com.twitter.util.Duration
 import org.graphstream.graph.{ Graph, EdgeFactory, NodeFactory, Node }
 import org.graphstream.graph.implementations.{ MultiGraph, AbstractEdge, AbstractNode, AbstractGraph }
 import org.graphstream.algorithm.ConnectedComponents
-import org.graphstream.ui.swingViewer.Viewer
+import org.graphstream.ui.view.Viewer
 import scala.collection.JavaConverters._
 import org.slf4j.LoggerFactory
 
@@ -117,19 +134,27 @@ class ReferrerGraph(id: String) {
         // There is no referrer, so we just update the node
         addNode(newEvent.url.toString, Some(newEvent.getSummary))
       case Some(ref) =>
-        // There is a referrer, so we can update the link (from referrer to target)
-        addLink(ref.toString, newEvent.url.toString, newEvent.getSummary)
+      	//check to make sure the url and referrer are not the same since this causes self-loop
+      	if(ref == newEvent.url){
+      		val newEventCopyWOReferrer = newEvent.copy(referrer = None)
+      		addNode(newEventCopyWOReferrer.url.toString, Some(newEventCopyWOReferrer.getSummary))
+      	}else{
+      		// There is a referrer, so we can update the link (from referrer to target)
+        	addLink(ref.toString, newEvent.url.toString, newEvent.getSummary)
+      	}
     }
   }
 
   private def candidateHNCriteria(node: ReSurfNode): Boolean = {
     VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse("text/html")) &&
       node.contentSizeAvg.getOrElse(Double.MaxValue) >= MIN_OBJECT_SIZE &&
-      node.outDegreeWithOutSelfLoop >= MIN_EMBEDDED_OBJECTS &&
+      node.getOutDegree >= MIN_EMBEDDED_OBJECTS &&
       node.timeGapAvg.getOrElse(Duration.Top) >= MIN_PASS_THROUGH_DELAY &&
       (!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains))
   }
 
+  def getInternalGraph = internalGraph
+  
   /**
    * Get the nodes that are considered head nodes through the ReSurf methodology
    * @return the head nodes
@@ -141,7 +166,7 @@ class ReferrerGraph(id: String) {
 
     val initial_HN = nodes.filter { node =>
       //check to make sure that node has no referrer (parent node)
-      candidateHNCriteria(node) && node.inDegreeWithOutSelfLoop == 0
+      candidateHNCriteria(node) && node.getInDegree == 0
     }.toSet
 
     var last_HN = initial_HN
@@ -150,7 +175,7 @@ class ReferrerGraph(id: String) {
     while (last_HN.size > 0) {
 
       //get the candidate children and make sure the candidate children are not already head nodes
-      //(this could happen in case of graph cycle or self-loop)
+      //(this could happen in case of graph cycle)
       val children_of_last_HN = last_HN.flatMap { node => node.childNodeSet }.toSet.diff(total_HN)
 
       last_HN = children_of_last_HN.filter { node =>

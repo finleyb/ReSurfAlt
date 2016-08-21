@@ -1,3 +1,20 @@
+/*
+ * This file is part of ReSurfAlt.
+ *
+ * ReSurfAlt is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ReSurfAlt is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ReSurfAlt. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 package com.resurf.graph
 
 import org.graphstream.graph.Element
@@ -92,20 +109,6 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
   }
 
   /**
-   * Get the in degree of this node without counting selfloops
-   *
-   * @return the in degree of this node without counting selfloops
-   */
-  def inDegreeWithOutSelfLoop:Int = { (parentNodeSet - this).size }
-
-  /**
-   * Get the out degree of this node without counting selfloops
-   *
-   * @return the out degree of this node without counting selfloops
-   */
-  def outDegreeWithOutSelfLoop:Int = { (childNodeSet - this).size }
-
-  /**
    * Get the set of children nodes of this node (nodes for which this node is a referrer)
    *
    * @return the set of children nodes of this node
@@ -134,5 +137,5 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
  * @param target the id of the target node
  * @param directed whether the node is directed
  */
-class ReSurfEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) 
+class ReSurfEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean)
 extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) with ReSurfElement
