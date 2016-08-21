@@ -7,7 +7,7 @@ organization := "benjamin.finley@.aalto.fi"
 
 version := "1.0"
 
-scalaVersion in ThisBuild := "2.10.6"
+scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
@@ -26,16 +26,18 @@ lazy val slf4jDependencies = Seq(
 
 libraryDependencies ++= Seq(
      // Using the ScalaTest library (only for testing)
-     "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+     "org.scalatest" %% "scalatest" % "3.0.0" % "test",
      // Using the very useful utils by twitter
-     "com.twitter" %% "util-collection" % "6.12.1",
+     "com.twitter" %% "util-collection" % "6.35.0",
      // Processing JSON
-     //"org.json4s" %% "json4s-jackson" % "3.2.11",
+     //"org.json4s" %% "json4s-jackson" % "3.4.0",
      // Reactive
      //"com.netflix.rxjava" % "rxjava-scala" % "0.19.1", 
      // Manipulating in memory Graphs
-     "org.graphstream" % "gs-core" %  "1.2",
-     "org.graphstream" % "gs-algo" %  "1.1" ) ++ slf4jDependencies
+     "org.graphstream" % "gs-core" %  "1.3",
+     "org.graphstream" % "gs-algo" %  "1.3" ) ++ slf4jDependencies
+
+//wartremoverErrors ++= Warts.allBut(Wart.NoNeedForMonad)
 
 // Import setting to help us automatically create project using 'np'
 //seq(npSettings: _*)
