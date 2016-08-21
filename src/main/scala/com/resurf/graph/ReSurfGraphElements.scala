@@ -138,4 +138,16 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
  * @param directed whether the node is directed
  */
 class ReSurfEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean)
-extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) with ReSurfElement
+extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) with ReSurfElement {
+	
+	/**
+   * 
+   * @return 
+   */
+  def edgeTime: Duration = {
+    val reqsToSourceNode = getSourceNode[ReSurfNode].requestRepo.getRepo
+    val reqstoTargetNodeSorted = requestRepo.getRepo.toSeq.sorted
+    averageDuration(reqsToSourceNode.flatMap {reqToSourceNode => RequestRepository.getDurationToNextRequest(reqToSourceNode, reqstoTargetNodeSorted).toList})
+  }
+	
+}
