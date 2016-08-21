@@ -177,7 +177,7 @@ class ReferrerGraph(id: String) {
             Some(node)
             //else if node still has incoming edges then follow the shortest one backward
           } else if (node.getInDegree > 0) {
-            val smallestEdge = node.getEachEnteringEdge[ReSurfEdge].asScala.minBy { edge => edge.edgeTime }
+            val smallestEdge = node.getEachEnteringEdge[ReSurfEdge].asScala.minBy { edge => edge.timeGapAvg }
             val sourceNodeOfShortestEdge = Some(smallestEdge.getSourceNode[ReSurfNode])
             traverseToHeadNode(sourceNodeOfShortestEdge)
             //node is not a headnode and does not have any incoming edges thus is unknown

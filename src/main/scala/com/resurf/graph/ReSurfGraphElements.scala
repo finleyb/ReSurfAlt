@@ -109,14 +109,14 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
   }
 
   /**
-   * Get the set of children nodes of this node (nodes for which this node is a referrer)
+   * The set of children nodes of this node (nodes for which this node is a referrer)
    *
    * @return the set of children nodes of this node
    */
   def childNodeSet: Set[ReSurfNode] = { getLeavingEdgeSet[ReSurfEdge].asScala.map { edge => edge.getTargetNode[ReSurfNode] }.toSet }
 
   /**
-   * Get the set of parents nodes of this node (nodes that are referrers of this node)
+   * The set of parents nodes of this node (nodes that are referrers of this node)
    *
    *   @return the set of parent nodes of this node
    */
@@ -141,10 +141,10 @@ class ReSurfEdge(id: String, source: AbstractNode, target: AbstractNode, directe
 extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, directed: Boolean) with ReSurfElement {
 	
 	/**
-   * 
-   * @return 
+   * The average time gap between requests on this edge and requests targeting the source node
+   * @return the average time gap
    */
-  def edgeTime: Duration = {
+  def timeGapAvg: Duration = {
     val reqsToSourceNode = getSourceNode[ReSurfNode].requestRepo.getRepo
     val reqstoTargetNodeSorted = requestRepo.getRepo.toSeq.sorted
     averageDuration(reqsToSourceNode.flatMap {reqToSourceNode => RequestRepository.getDurationToNextRequest(reqToSourceNode, reqstoTargetNodeSorted).toList})
