@@ -54,7 +54,7 @@ class ReferrerGraph(id: String) {
     }
   });
 
-  def getLinkIdAsString(src: String, dst: String):String = s"$src->$dst"
+  def getLinkIdAsString(src: String, dst: String): String = s"$src->$dst"
 
   /**
    * Add a node to the referrer graph based on the specified RequestSummary
@@ -120,13 +120,13 @@ class ReferrerGraph(id: String) {
   }
 
   /** Display the referrer graph */
-  def viz:Viewer = internalGraph.display()
+  def viz: Viewer = internalGraph.display()
 
   /**
    * Processes the specified web request by creating the specific node(s) and link in the referrer graph
    * @param newEvent the HTTP request to process
    */
-  def processRequest(newEvent: WebRequest):Unit = {
+  def processRequest(newEvent: WebRequest): Unit = {
     //Deal with HTTP redirection 302 statuses ????
     val referrer = newEvent.referrer
     referrer match {
@@ -134,14 +134,14 @@ class ReferrerGraph(id: String) {
         // There is no referrer, so we just update the node
         addNode(newEvent.url.toString, Some(newEvent.getSummary))
       case Some(ref) =>
-      	//check to make sure the url and referrer are not the same since this causes self-loop
-      	if(ref == newEvent.url){
-      		val newEventCopyWOReferrer = newEvent.copy(referrer = None)
-      		addNode(newEventCopyWOReferrer.url.toString, Some(newEventCopyWOReferrer.getSummary))
-      	}else{
-      		// There is a referrer, so we can update the link (from referrer to target)
-        	addLink(ref.toString, newEvent.url.toString, newEvent.getSummary)
-      	}
+        //check to make sure the url and referrer are not the same since this causes self-loop
+        if (ref == newEvent.url) {
+          val newEventCopyWOReferrer = newEvent.copy(referrer = None)
+          addNode(newEventCopyWOReferrer.url.toString, Some(newEventCopyWOReferrer.getSummary))
+        } else {
+          // There is a referrer, so we can update the link (from referrer to target)
+          addLink(ref.toString, newEvent.url.toString, newEvent.getSummary)
+        }
     }
   }
 
@@ -154,7 +154,46 @@ class ReferrerGraph(id: String) {
   }
 
   def getInternalGraph = internalGraph
-  
+
+  /**
+   * Get the head node that each node maps to according to the ReSurf methodology.
+   * Headnodes naturally map to themselves. Nodes that are not head nodes and do not map to a 
+   * headnode are considered unknown and map to None.
+   *
+   * @return a map in the form (node => Option[headnode])
+   */
+  def assignNodesToHeadNodes: Map[ReSurfNode, Option[ReSurfNode]] = {
+
+    //get the headnodes
+    val headNodes = getHeadNodes
+
+    //define recursive function that traverses backward toward the head node
+    def traverseToHeadNode(node: Option[ReSurfNode]): Option[ReSurfNode] = {
+      node match {
+        case None => throw new Exception("A node along the chain is null, this should never happen!")
+        case Some(node) => {
+          //node is head node thus we found the headnode to map to! 
+          if (headNodes.contains(node)) {
+            Some(node)
+            //else if node still has incoming edges then follow the shortest one backward
+          } else if (node.getInDegree > 0) {
+            val smallestEdge = node.getEachEnteringEdge[ReSurfEdge].asScala.minBy { edge => edge.edgeTime }
+            val sourceNodeOfShortestEdge = Some(smallestEdge.getSourceNode[ReSurfNode])
+            traverseToHeadNode(sourceNodeOfShortestEdge)
+            //node is not a headnode and does not have any incoming edges thus is unknown
+          } else { None }
+        }
+      }
+    }
+
+    //find nodes that are not head nodes since we will follow these backwards to the headnodes
+    val nonHeadNodes = internalGraph.getNodeSet[ReSurfNode].asScala.toSet.diff(headNodes)
+    //call the function for each node that is not a headnode
+    nonHeadNodes.map { node => (node, traverseToHeadNode(Some(node))) }
+      //transform to map and add the headnodes as mapping to themselves
+      .toMap ++ headNodes.map { headNode => (headNode, Some(headNode)) }
+  }
+
   /**
    * Get the nodes that are considered head nodes through the ReSurf methodology
    * @return the head nodes
