@@ -18,7 +18,7 @@
 package com.resurf.main
 
 import java.net.URL
-import com.resurf.graph.{ ReSurfNode, ReferrerGraph }
+import com.resurf.graph.{ ReSurfNode, ReferrerGraph,ReSurfEdge }
 import com.twitter.util.{ Time, Duration }
 import com.twitter.conversions.time._
 import com.resurf.common._
@@ -51,9 +51,10 @@ object ReSurfApp {
     val w7 = WebRequest(now + 1000.seconds, "GET", url2, None, "text/html", 4000)
     val w8 = WebRequest(now + 1000.seconds + 900.millis, "GET", url5, Some(url2), "text/html", 4000)
     val w9 = WebRequest(now + 1000.seconds + 1100.millis, "GET", url6, Some(url2), "text/html", 4000)
-    val w10 = WebRequest(now + 1000.seconds + 35.seconds, "GET", url8, Some(url2), "text/html", 4000)
-    val w11 = WebRequest(now + 1000.seconds + 35.seconds + 100.millis, "GET", url9, Some(url8), "text/html", 4000)
-    val w12 = WebRequest(now + 1000.seconds + 35.seconds + 200.millis, "GET", url10, Some(url8), "text/html", 4000)
+    val w10 = WebRequest(now + 1000.seconds + 1300.millis, "GET", url7, Some(url6), "text/html", 4000)
+    val w11 = WebRequest(now + 1000.seconds + 35.seconds, "GET", url8, Some(url2), "text/html", 4000)
+    val w12 = WebRequest(now + 1000.seconds + 35.seconds + 100.millis, "GET", url9, Some(url8), "text/html", 4000)
+    val w13 = WebRequest(now + 1000.seconds + 35.seconds + 200.millis, "GET", url10, Some(url8), "text/html", 4000)
 
     val graph = new ReferrerGraph("graph-name")
     graph.processRequest(w1)
@@ -68,10 +69,13 @@ object ReSurfApp {
     graph.processRequest(w10)
     graph.processRequest(w11)
     graph.processRequest(w12)
+    graph.processRequest(w13)
 
-    val headNodes = graph.getHeadNodes
-
-    headNodes.foreach { node => println(node.getId) }
+    //val headNodes = graph.getHeadNodes
+    //headNodes.foreach { node => println(node.getId) }
+    
+    graph.assignNodesToHeadNodes.foreach{case(node,headNode) => println(node.getId + " --- " + headNode.getOrElse("Unknown"))}
+    
   }
 }
 
