@@ -20,6 +20,7 @@ package com.resurf
 import com.twitter.util.{ Duration, Time }
 import java.net.URLDecoder
 import com.twitter.conversions.time._
+import java.io.{PrintWriter,File}
 
 /** Contains common utility methods and Constants */
 package object common {
@@ -31,7 +32,6 @@ package object common {
   val URI_KEYWORDS = Set("adserver", "ads", "widget", "embed", "banner")
 
   def writeDataToDisk[T](data: Seq[T], fname: String):Unit = {
-    import java.io._
     val pw = new PrintWriter(new File(fname))
     data.foreach(x => pw.write(x + "\n"))
     pw.close()

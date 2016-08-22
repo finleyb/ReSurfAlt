@@ -39,7 +39,7 @@ class ReferrerGraph(id: String) {
 
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   //the internal graphstream multigraph that holds our custom nodes and edges
-  private val internalGraph: Graph = new MultiGraph(s"RG:$id", false, true)
+  private val internalGraph: Graph = new MultiGraph("RG:" + id, false, true)
 
   //set the node factory to the custom node class
   internalGraph.setNodeFactory(new NodeFactory[ReSurfNode] {
@@ -136,7 +136,7 @@ class ReferrerGraph(id: String) {
         addNode(newEvent.url.toString, Some(newEvent.getSummary))
       case Some(ref) =>
         //check to make sure the url and referrer are not the same since this causes self-loop
-        if (ref == newEvent.url) {
+        if (ref.equals(newEvent.url)) {
           val newEventCopyWOReferrer = newEvent.copy(referrer = None)
           addNode(newEventCopyWOReferrer.url.toString, Some(newEventCopyWOReferrer.getSummary))
         } else {
@@ -154,7 +154,7 @@ class ReferrerGraph(id: String) {
       (!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains))
   }
 
-  def getInternalGraph = internalGraph
+  def getInternalGraph:Graph = internalGraph
 
   /**
    * Get the head node that each node maps to according to the ReSurf methodology.
@@ -167,22 +167,21 @@ class ReferrerGraph(id: String) {
 
     //get the headnodes
     val headNodes = getHeadNodes
-    
+
     //store the IDs of taken edges while searching so that we don't end up trapped in a cycle
     var takenEdgeIDs = Set.empty[String]
-    
+
     //define recursive function that traverses backward toward the head node
     lazy val traverseToHeadNode: Option[ReSurfNode] => Option[ReSurfNode] =
       //use memoization from scalaz to improve performance
       Memo.mutableHashMapMemo {
-        case None => throw new Exception("A node along the chain is null, this should never happen!")
         case Some(node) => {
-          //node is head node thus we found the headnode to map to! 
+          //node is head node thus we found the headnode to map to!
           if (headNodes.contains(node)) {
             Some(node)
             //else if node still has incoming edges and we haven't take all of them yet then follow the shortest one backward
           } else if (node.getInDegree > 0 && node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}.size > 0) {
-          	val enteringEdgesNotTaken = node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}
+            val enteringEdgesNotTaken = node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}
             val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy {edge => edge.timeGapAvg}
             takenEdgeIDs += smallestEdgeNotTaken.getId
             val sourceNodeOfShortestEdgeNotTaken = Some(smallestEdgeNotTaken.getSourceNode[ReSurfNode])
@@ -190,15 +189,16 @@ class ReferrerGraph(id: String) {
             //node is not a headnode and does not have any incoming edges or untaken incoming edges thus is classified as unknown
           } else { None }
         }
+        case None => throw new Exception("A node along the chain is null, this should never happen!")
       }
 
     //find nodes that are not head nodes since we will follow these backwards to the headnodes
     val nonHeadNodes = internalGraph.getNodeSet[ReSurfNode].asScala.toSet.diff(headNodes)
     //call the function for each node that is not a headnode
-    nonHeadNodes.map { node => 
-    	//reset the taken edge set for each node
-    	 takenEdgeIDs = Set.empty[String]
-    	(node, traverseToHeadNode(Some(node)))
+    nonHeadNodes.map { node =>
+      //reset the taken edge set for each node
+      takenEdgeIDs = Set.empty[String]
+      (node, traverseToHeadNode(Some(node)))
     }
       //transform to map and add the headnodes as mapping to themselves
       .toMap ++ headNodes.map { headNode => (headNode, Some(headNode)) }
@@ -235,5 +235,4 @@ class ReferrerGraph(id: String) {
     }
     total_HN
   }
-
 }

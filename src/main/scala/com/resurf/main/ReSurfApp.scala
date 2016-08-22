@@ -29,8 +29,12 @@ object ReSurfApp {
   def main(args: Array[String]) {
 
     //Demonstrate the scenario presented in the ReSurf research paper (ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6663499)
+    val START_TIME = 1000000
+    val HTTP_METHOD = "GET"
+    val CONTENT_TYPE = "text/html"
+    val SIZE_BYTES = 4000
 
-    def now = Time.fromMilliseconds(1000000)
+    val now = Time.fromMilliseconds(START_TIME)
     val url1 = new URL(prepareURLString("http://www.cnn.com"))
     val url2 = new URL(prepareURLString("http://www.gamestop.com"))
     val url3 = new URL(prepareURLString("http://ads.cnn.com/id=210"))
@@ -42,19 +46,19 @@ object ReSurfApp {
     val url9 = new URL(prepareURLString("http://www.gamestop.com/hplib-min.js"))
     val url10 = new URL(prepareURLString("http://s0.2mdn.net/300x250.swf"))
 
-    val w1 = WebRequest(now, "GET", url1, None, "text/html", 4000)
-    val w2 = WebRequest(now + 500.millis, "GET", url3, Some(url1), "text/html", 4000)
-    val w3 = WebRequest(now + 700.millis, "GET", url4, Some(url3), "text/html", 4000)
-    val w4 = WebRequest(now + 300.millis, "GET", url5, Some(url1), "text/html", 4000)
-    val w5 = WebRequest(now + 400.millis, "GET", url6, Some(url1), "text/html", 4000)
-    val w6 = WebRequest(now + 700.millis, "GET", url7, Some(url6), "text/html", 4000)
-    val w7 = WebRequest(now + 1000.seconds, "GET", url2, None, "text/html", 4000)
-    val w8 = WebRequest(now + 1000.seconds + 900.millis, "GET", url5, Some(url2), "text/html", 4000)
-    val w9 = WebRequest(now + 1000.seconds + 1100.millis, "GET", url6, Some(url2), "text/html", 4000)
-    val w10 = WebRequest(now + 1000.seconds + 1300.millis, "GET", url7, Some(url6), "text/html", 4000)
-    val w11 = WebRequest(now + 1000.seconds + 35.seconds, "GET", url8, Some(url2), "text/html", 4000)
-    val w12 = WebRequest(now + 1000.seconds + 35.seconds + 100.millis, "GET", url9, Some(url8), "text/html", 4000)
-    val w13 = WebRequest(now + 1000.seconds + 35.seconds + 200.millis, "GET", url10, Some(url8), "text/html", 4000)
+    val w1 = WebRequest(now, HTTP_METHOD, url1, None, CONTENT_TYPE, SIZE_BYTES)
+    val w2 = WebRequest(now + 500.millis, HTTP_METHOD, url3, Some(url1),CONTENT_TYPE, SIZE_BYTES)
+    val w3 = WebRequest(now + 700.millis, HTTP_METHOD, url4, Some(url3), CONTENT_TYPE, SIZE_BYTES)
+    val w4 = WebRequest(now + 300.millis, HTTP_METHOD, url5, Some(url1), CONTENT_TYPE, SIZE_BYTES)
+    val w5 = WebRequest(now + 400.millis, HTTP_METHOD, url6, Some(url1), CONTENT_TYPE, SIZE_BYTES)
+    val w6 = WebRequest(now + 700.millis, HTTP_METHOD, url7, Some(url6), CONTENT_TYPE, SIZE_BYTES)
+    val w7 = WebRequest(now + 1000.seconds, HTTP_METHOD, url2, None, CONTENT_TYPE, SIZE_BYTES)
+    val w8 = WebRequest(now + 1000.seconds + 900.millis, HTTP_METHOD, url5, Some(url2), CONTENT_TYPE, SIZE_BYTES)
+    val w9 = WebRequest(now + 1000.seconds + 1100.millis, HTTP_METHOD, url6, Some(url2), CONTENT_TYPE, SIZE_BYTES)
+    val w10 = WebRequest(now + 1000.seconds + 1300.millis, HTTP_METHOD, url7, Some(url6), CONTENT_TYPE, SIZE_BYTES)
+    val w11 = WebRequest(now + 1000.seconds + 35.seconds, HTTP_METHOD, url8, Some(url2), CONTENT_TYPE, SIZE_BYTES)
+    val w12 = WebRequest(now + 1000.seconds + 35.seconds + 100.millis, HTTP_METHOD, url9, Some(url8), CONTENT_TYPE, SIZE_BYTES)
+    val w13 = WebRequest(now + 1000.seconds + 35.seconds + 200.millis, HTTP_METHOD, url10, Some(url8), CONTENT_TYPE, SIZE_BYTES)
 
     val graph = new ReferrerGraph("graph-name")
     graph.processRequest(w1)
@@ -73,9 +77,9 @@ object ReSurfApp {
 
     //val headNodes = graph.getHeadNodes
     //headNodes.foreach { node => println(node.getId) }
-    
+
     graph.assignNodesToHeadNodes.foreach{case(node,headNode) => println(node.getId + " --- " + headNode.getOrElse("Unknown"))}
-    
+
   }
 }
 
