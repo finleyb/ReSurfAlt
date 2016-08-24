@@ -11,8 +11,6 @@ scalaVersion in ThisBuild := "2.11.8"
 
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
-seq(clojure.settings :_*)
-
 resolvers ++= Seq(
     "maven.org" at "http://repo.maven.apache.org/",
     "twitter" at "http://maven.twttr.com/"
@@ -29,12 +27,9 @@ libraryDependencies ++= Seq(
      "org.scalatest" %% "scalatest" % "3.0.0" % "test",
      // Using the very useful utils by twitter
      "com.twitter" %% "util-collection" % "6.35.0",
+     // Using scalaz for memoization
      "org.scalaz" %% "scalaz-core" % "7.2.5",
-     // Processing JSON
-     //"org.json4s" %% "json4s-jackson" % "3.4.0",
-     // Reactive
-     //"com.netflix.rxjava" % "rxjava-scala" % "0.19.1", 
-     // Manipulating in memory Graphs
+     // Manipulating in memory graphs
      "org.graphstream" % "gs-core" %  "1.3",
      "org.graphstream" % "gs-algo" %  "1.3" ) ++ slf4jDependencies
 
