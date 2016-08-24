@@ -16,7 +16,7 @@
  */
 
 package com.resurf.common
-import org.apache.log4j._
+import org.apache.log4j.{Logger,ConsoleAppender,PatternLayout}
 import org.scalatest.FunSuite
 import org.scalatest.BeforeAndAfter
 import org.scalatest.Matchers

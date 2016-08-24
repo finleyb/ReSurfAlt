@@ -61,7 +61,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
       case true =>
         reqsToParentNodes.flatMap { parentReq => RequestRepository.getDurationToNextRequest(parentReq, reqsToNodeSorted).toList } match {
           case Nil => None
-          case k: Seq[Duration] => Some(averageDuration(k))
+          case k: Seq[Duration] => averageDuration(k)
         }
     }
   }
@@ -144,9 +144,16 @@ extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, dir
    * The average time gap between requests on this edge and requests targeting the source node
    * @return the average time gap
    */
-  def timeGapAvg: Duration = {
+  def timeGapAvg: Option[Duration] = {
     val reqsToSourceNode = getSourceNode[ReSurfNode].requestRepo.getRepo
     val reqstoTargetNodeSorted = requestRepo.getRepo.toSeq.sorted
-    averageDuration(reqsToSourceNode.flatMap {reqToSourceNode => RequestRepository.getDurationToNextRequest(reqToSourceNode, reqstoTargetNodeSorted).toList})
+    (!reqsToSourceNode.isEmpty && !reqstoTargetNodeSorted.isEmpty) match {
+      case false => None
+      case true =>
+        reqsToSourceNode.flatMap {reqToSourceNode => RequestRepository.getDurationToNextRequest(reqToSourceNode, reqstoTargetNodeSorted).toList } match {
+          case Nil => None
+          case k: Seq[Duration] => averageDuration(k)
+        }
+    }
   }
 }

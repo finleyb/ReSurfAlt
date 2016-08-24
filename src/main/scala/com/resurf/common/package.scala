@@ -57,7 +57,13 @@ package object common {
    * @param data the sequence of durations
    * @return the average duration
    */
-  def averageDuration(data: Seq[Duration]): Duration = Duration.fromNanoseconds(data.map(_.inNanoseconds).sum / data.size)
+  def averageDuration(data: Seq[Duration]): Option[Duration] = {
+  	if(!data.isEmpty){
+  		Some(Duration.fromNanoseconds(data.map(_.inNanoseconds).sum / data.size))
+  	}else{
+  		None
+  	}
+  }
 
   /**
    * Prepares a URL string for comparison against other URL string by decoding the URL encoding, downcasing, and finally striping trailing slashes

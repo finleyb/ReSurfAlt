@@ -182,7 +182,7 @@ class ReferrerGraph(id: String) {
             //else if node still has incoming edges and we haven't take all of them yet then follow the shortest one backward
           } else if (node.getInDegree > 0 && node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}.size > 0) {
             val enteringEdgesNotTaken = node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}
-            val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy {edge => edge.timeGapAvg}
+            val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy{edge => edge.timeGapAvg.getOrElse(Duration.Top)}
             takenEdgeIDs += smallestEdgeNotTaken.getId
             val sourceNodeOfShortestEdgeNotTaken = Some(smallestEdgeNotTaken.getSourceNode[ReSurfNode])
             traverseToHeadNode(sourceNodeOfShortestEdgeNotTaken)
