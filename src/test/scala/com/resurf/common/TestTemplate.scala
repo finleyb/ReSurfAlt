@@ -20,6 +20,7 @@ import org.apache.log4j.{Logger,ConsoleAppender,PatternLayout}
 import org.scalatest.FunSuite
 import org.scalatest.BeforeAndAfter
 import org.scalatest.Matchers
+import org.scalatest.OptionValues._
 
 class TestTemplate extends FunSuite with BeforeAndAfter with Matchers {
 
