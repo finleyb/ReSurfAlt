@@ -21,7 +21,7 @@ import org.graphstream.graph.Element
 import org.graphstream.graph.implementations.{ MultiNode, AbstractNode, AbstractEdge, AbstractGraph }
 import java.lang
 import scala.collection.JavaConverters._
-import com.twitter.util.Duration
+import com.twitter.util.{Duration, StorageUnit}
 import com.resurf.common._
 
 /**
@@ -41,15 +41,15 @@ trait ReSurfElement extends Element {
  * stores all requests with the specific node as the target (regardless of whether the request had a referrer or not).
  *
  * @constructor create a new ReSurfNode
- * @param graph
- * @param id
+ * @param graph the graph the node should belong to
+ * @param id the id of the node
  */
 class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: AbstractGraph, id: String) with ReSurfElement {
 
   /**
    * The average time gap between requests targeting this node and requests targeting this nodes parent nodes (referrers)
    *
-   * @return the average time gap
+   * @return an Option with either the average time gap or None
    */
   def timeGapAvg: Option[Duration] = {
     //incoming requests to parent of node including those without referrer
@@ -71,7 +71,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
    *
    * The content type is calculated as the mode of content types specified by requests targeting this node
    *
-   * @return the content type of this node
+   * @return an Option with either the content type of this node or None
    */
   def contentTypeMode: Option[String] = requestRepo.isEmtpy match {
     case true => None
@@ -83,7 +83,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
    *
    * The parameters is calculated as the mode of parameters specified by requests targeting this node
    *
-   * @return the parameter of this node
+   * @return an Option with either the parameter of this node or None
    */
   def parametersMode: Option[String] = requestRepo.isEmtpy match {
     case true => None
@@ -95,15 +95,15 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
    *
    * The content size is calculated as the average of content sizes specified by replies of requests targeting this node
    *
-   * @return the content size of this node
+   * @return an Option with either the content size of this node or None
    */
-  def contentSizeAvg: Option[Double] = requestRepo.isEmtpy match {
+  def contentSizeAvg: Option[StorageUnit] = requestRepo.isEmtpy match {
     case true => None
     case false => {
       val sizes = requestRepo.getRepo.flatMap(_.size.toList)
       sizes match {
         case Nil => None
-        case sizesn: List[Int] => Some((sizesn.sum.toDouble) / (sizesn.size.toDouble))
+        case sizesn: List[StorageUnit] => averageStorageSize(sizesn)
       }
     }
   }
@@ -118,7 +118,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
   /**
    * The set of parents nodes of this node (nodes that are referrers of this node)
    *
-   *   @return the set of parent nodes of this node
+   * @return the set of parent nodes of this node
    */
   def parentNodeSet: Set[ReSurfNode] = { getEnteringEdgeSet[ReSurfEdge].asScala.map { edge => edge.getSourceNode[ReSurfNode] }.toSet }
 

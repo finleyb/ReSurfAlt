@@ -19,7 +19,7 @@ package com.resurf.etl
 
 import java.net.URL
 import com.resurf.common.WebRequest
-import com.twitter.util.Time
+import com.twitter.util.{Time, StorageUnit}
 
 object Converters {
   private[etl] val customSquidPattern = """(\d+\.\d+) (\d+\.\d+\.\d+\.\d+) (\d+) (\w+) "(.+)" (HTTP/\d\.\d) (\d{3}) (\d+) "(.+)" "(.+)" ([\w/\.\-]+)[\n]*""".r
@@ -32,6 +32,6 @@ object Converters {
           case x => Some(new URL(x))
         }
         WebRequest(Time.fromMilliseconds((ts.toDouble*1000).toLong),method,new URL(url),
-          optionalReferrer,content,bytes.toInt, Some(logLine) )
+          optionalReferrer,content,new StorageUnit(bytes.toInt), Some(logLine) )
     }
 }

@@ -19,7 +19,7 @@ package com.resurf.graph
 
 import java.lang
 import com.resurf.common._
-import com.twitter.util.Duration
+import com.twitter.util.{Duration, StorageUnit}
 import org.graphstream.graph.{ Graph, EdgeFactory, NodeFactory, Node }
 import org.graphstream.graph.implementations.{ MultiGraph, AbstractEdge, AbstractNode, AbstractGraph }
 import org.graphstream.algorithm.ConnectedComponents
@@ -55,7 +55,14 @@ class ReferrerGraph(id: String) {
     }
   });
 
-  def getLinkIdAsString(src: String, dst: String): String = s"$src->$dst"
+  /**
+   * Get the link id based on the source and destination node ids
+   *
+   * @param src the id of the source node of the link
+   * @param dst the id of the destination node of the link
+   * @return the link id
+   */
+  def getLinkIdAsString(src: String, dst: String): String = src.toString + "->" + dst.toString
 
   /**
    * Add a node to the referrer graph based on the specified RequestSummary
@@ -82,6 +89,36 @@ class ReferrerGraph(id: String) {
         }
     }
   }
+  
+  /**
+   * Get a node by id
+   *
+   * @param the id of the node to get
+   * @return an Option containing either the ReSurfNode or None
+   */
+  def getNode(nodeId:String):Option[ReSurfNode] = Option(internalGraph.getNode[ReSurfNode](nodeId))
+
+  /**
+   * Get an edge by id
+   *
+   * @param the id of the edge to get
+   * @return an Option containing either the ReSurfEdge or None
+   */
+  def getEdge(edgeId:String):Option[ReSurfEdge] = Option(internalGraph.getEdge[ReSurfEdge](edgeId))
+
+  /**
+   * The number of edges of the referrer graph
+   *
+   * @return number of edges of the referrer graph
+   */
+  def edgeCount:Int = internalGraph.getEdgeCount
+
+  /**
+   * The number of nodes of the referrer graph
+   *
+   * @return number of nodes of the referrer graph
+   */
+  def nodeCount:Int = internalGraph.getNodeCount
 
   /**
    * Add a link to the referrer graph based on the specified source node, destination node, and request
@@ -112,6 +149,7 @@ class ReferrerGraph(id: String) {
 
   /**
    * Get a summary of the referrer graph
+   * 
    * @return a graph summary for the referrer graph
    */
   def getGraphSummary: GraphSummary = {
@@ -125,6 +163,7 @@ class ReferrerGraph(id: String) {
 
   /**
    * Processes the specified web request by creating the specific node(s) and link in the referrer graph
+   * 
    * @param newEvent the HTTP request to process
    */
   def processRequest(newEvent: WebRequest): Unit = {
@@ -148,13 +187,13 @@ class ReferrerGraph(id: String) {
 
   private def candidateHNCriteria(node: ReSurfNode): Boolean = {
     VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse("text/html")) &&
-      node.contentSizeAvg.getOrElse(Double.MaxValue) >= MIN_OBJECT_SIZE &&
+      node.contentSizeAvg.getOrElse(StorageUnit.infinite) >= MIN_OBJECT_SIZE &&
       node.getOutDegree >= MIN_EMBEDDED_OBJECTS &&
       node.timeGapAvg.getOrElse(Duration.Top) >= MIN_PASS_THROUGH_DELAY &&
       (!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains))
   }
 
-  def getInternalGraph:Graph = internalGraph
+  //def getInternalGraph:Graph = internalGraph
 
   /**
    * Get the head node that each node maps to according to the ReSurf methodology.
@@ -206,6 +245,7 @@ class ReferrerGraph(id: String) {
 
   /**
    * Get the nodes that are considered head nodes through the ReSurf methodology
+   * 
    * @return the head nodes
    */
   def getHeadNodes: Set[ReSurfNode] = {

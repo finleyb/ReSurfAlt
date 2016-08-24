@@ -71,6 +71,7 @@ object RequestRepository {
 
   /**
    * Given a request and a large repository of requests find the time it took from the target request until the closest outgoing request.
+   * 
    * @param incomingRequest
    * @param orderedOutgoingRequests
    * @return the time between the target request and closest outgoing request
