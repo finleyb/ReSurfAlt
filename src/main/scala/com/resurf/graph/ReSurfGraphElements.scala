@@ -100,8 +100,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
   def contentSizeAvg: Option[StorageUnit] = requestRepo.isEmtpy match {
     case true => None
     case false => {
-      val sizes = requestRepo.getRepo.flatMap(_.size.toList)
-      sizes match {
+      requestRepo.getRepo.flatMap(_.size.toList) match {
         case Nil => None
         case sizesn: List[StorageUnit] => averageStorageSize(sizesn)
       }

@@ -44,18 +44,14 @@ class ReferrerGraph(id: String) {
   //set the node factory to the custom node class
   internalGraph.setNodeFactory(new NodeFactory[ReSurfNode] {
     def newInstance(id: String, graph: Graph): ReSurfNode = {
-      graph match {
-        case graph:AbstractGraph => new ReSurfNode(graph, id)
-      }
+      graph match {case graph:AbstractGraph => new ReSurfNode(graph, id)}
     }
   })
 
   //set the edge factory to the custom edge class
   internalGraph.setEdgeFactory(new EdgeFactory[ReSurfEdge] {
     def newInstance(id: String, src: Node, dst: Node, directed: Boolean): ReSurfEdge = {
-      (src,dst) match {
-        case (src:AbstractNode,dst:AbstractNode) => new ReSurfEdge(id, src, dst, directed)
-      }
+      (src,dst) match {case (src:AbstractNode,dst:AbstractNode) => new ReSurfEdge(id, src, dst, directed)}
     }
   });
 
@@ -82,8 +78,7 @@ class ReferrerGraph(id: String) {
       case Some(request) =>
         logger.debug(s"Adding node $nodeId with details $details")
         //node is not in internalGraph
-        val node = Option(internalGraph.getNode[ReSurfNode](nodeId))
-        node match {
+        Option(internalGraph.getNode[ReSurfNode](nodeId)) match {
           case None =>
             logger.debug("First time seeing node: {}", nodeId)
             this.addNode(nodeId)
@@ -137,9 +132,8 @@ class ReferrerGraph(id: String) {
     this.addNode(srcId)
     //nodes store their incoming requests as the repository
     this.addNode(dstId, Some(details))
-    // Gets the edge if it exists, else it returns null
-    val edge = Option(internalGraph.getEdge[ReSurfEdge](edgeId)) //if the edge (link) does not exist then create it!
-    match {
+    //Gets the edge if it already exists, else create it
+    Option(internalGraph.getEdge[ReSurfEdge](edgeId)) match {
       case None =>
         logger.debug(s"New edge from $srcId to $dstId")
         internalGraph.addEdge(edgeId, srcId, dstId, true)
@@ -172,19 +166,19 @@ class ReferrerGraph(id: String) {
    */
   def processRequest(newEvent: WebRequest): Unit = {
     //Deal with HTTP redirection 302 statuses ????
-    val referrer = newEvent.referrer
-    referrer match {
+    newEvent.referrer match {
       case None =>
         // There is no referrer, so we just update the node
         addNode(newEvent.url.toString, Some(newEvent.getSummary))
-      case Some(ref) =>
+      case Some(referrer) =>
         //check to make sure the url and referrer are not the same since this causes self-loop
-        if (ref.equals(newEvent.url)) {
+        if (referrer.equals(newEvent.url)) {
+        	//if they are the same then simply remove the referrer
           val newEventCopyWOReferrer = newEvent.copy(referrer = None)
           addNode(newEventCopyWOReferrer.url.toString, Some(newEventCopyWOReferrer.getSummary))
         } else {
           // There is a referrer, so we can update the link (from referrer to target)
-          addLink(ref.toString, newEvent.url.toString, newEvent.getSummary)
+          addLink(referrer.toString, newEvent.url.toString, newEvent.getSummary)
         }
     }
   }
@@ -241,14 +235,14 @@ class ReferrerGraph(id: String) {
     //find nodes that are not head nodes since we will follow these backwards to the headnodes
     val nonHeadNodes = internalGraph.getNodeSet[ReSurfNode].asScala.toSet.diff(headNodes)
     //call the function for each node that is not a headnode
-    nonHeadNodes.map { node =>
+    nonHeadNodes.map{node =>
       logger.debug("Starting traversal to find headnode for node " + node.getId)
       //reset the taken edge set for each node
       takenEdgeIDs = Set.empty[String]
       (node, traverseToHeadNode(Some(node)))
     }
       //transform to map and add the headnodes as mapping to themselves
-      .toMap ++ headNodes.map { headNode => (headNode, Some(headNode)) }
+      .toMap ++ headNodes.map{headNode => (headNode, Some(headNode)) }
   }
 
   /**
