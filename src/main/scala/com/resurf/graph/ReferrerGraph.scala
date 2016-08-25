@@ -190,11 +190,11 @@ class ReferrerGraph(id: String) {
   }
 
   private def candidateHNCriteria(node: ReSurfNode): Boolean = {
-    VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse("text/html")) &&
-      node.contentSizeAvg.getOrElse(StorageUnit.infinite) >= MIN_OBJECT_SIZE &&
-      node.getOutDegree >= MIN_EMBEDDED_OBJECTS &&
-      node.timeGapAvg.getOrElse(Duration.Top) >= MIN_PASS_THROUGH_DELAY &&
-      (!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains))
+    VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse(DEFAULT_NODE_CONTENT_TYPE)) &&
+      node.contentSizeAvg.getOrElse(DEFAULT_NODE_RESPONSE_SIZE) >= MIN_HEADNODE_RESPONSE_SIZE &&
+      node.getOutDegree >= MIN_HEADNODE_EMBEDDED_OBJECTS &&
+      node.timeGapAvg.getOrElse(DEFAULT_NODE_AVG_TIME_GAP) >= MIN_HEADNODE_AVG_TIME_GAP &&
+      (!NONHEADNODE_URI_KEYWORDS.exists(node.parametersMode.getOrElse(DEFAULT_NODE_URI_KEYWORDS).contains))
   }
 
   /**
@@ -224,7 +224,7 @@ class ReferrerGraph(id: String) {
             //else if node still has incoming edges and we haven't take all of them yet then follow the shortest one backward
           } else if (node.getInDegree > 0 && node.getEachEnteringEdge[ReSurfEdge].asScala.count{node => !takenEdgeIDs.contains(node.getId)} > 0) {
             val enteringEdgesNotTaken = node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}
-            val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy{edge => edge.timeGapAvg.getOrElse(Duration.Top)}
+            val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy{edge => edge.timeGapAvg.getOrElse(DEFAULT_EDGE_AVG_TIME_GAP)}
             takenEdgeIDs += smallestEdgeNotTaken.getId
             val sourceNodeOfShortestEdgeNotTaken = smallestEdgeNotTaken.getSourceNode[ReSurfNode]
             logger.debug("Found an edge to take backwards through node " + sourceNodeOfShortestEdgeNotTaken.getId)

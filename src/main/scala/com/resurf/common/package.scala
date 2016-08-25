@@ -26,11 +26,27 @@ import java.io.{PrintWriter,File}
 /** Contains common utility methods and Constants */
 package object common {
 
+  //These variables determine which nodes are classified as head nodes.
+  //The current values are directly from the ReSurf methodology paper.
   val VALID_HEADNODE_CONTENT_TYPES = Set("text/html", "text/xhtml", "text/xml", "application/xhtml", "application/xml")
-  val MIN_OBJECT_SIZE = 3000.bytes
-  val MIN_EMBEDDED_OBJECTS = 2.0
-  val MIN_PASS_THROUGH_DELAY = 500.millis
-  val URI_KEYWORDS = Set("adserver", "ads", "widget", "embed", "banner")
+  val MIN_HEADNODE_RESPONSE_SIZE = 3000.bytes
+  val MIN_HEADNODE_EMBEDDED_OBJECTS = 2.0
+  val MIN_HEADNODE_AVG_TIME_GAP = 500.millis
+  val NONHEADNODE_URI_KEYWORDS = Set("adserver", "ads", "widget", "embed", "banner")
+
+  //These variables control the default values for nodes where this information is missing, thus depending
+  //on these defaults the methodology can be more aggressive or more conservative in classifying nodes as headnodes.
+  //The current default values are based on the most aggressive classification.
+  val DEFAULT_NODE_CONTENT_TYPE = "text/html"
+  val DEFAULT_NODE_RESPONSE_SIZE = StorageUnit.infinite
+  val DEFAULT_NODE_AVG_TIME_GAP = Duration.Top
+  val DEFAULT_NODE_URI_KEYWORDS = ""
+  
+  //This variable controls the default edge time gap when that time gap cannot be calculated, for instance when
+  //all of the requests to the source node of the edge were before the actual edge requests.
+  //This should not be changed unless you know what you are doing.
+  val DEFAULT_EDGE_AVG_TIME_GAP = Duration.Top
+
   val VALID_HTTP_METHODS = Set("GET","POST","HEAD","PUT","OPTIONS","TRACE","DELETE","CONNECT","PATCH")
 
   def writeDataToDisk[T](data: Seq[T], fname: String):Unit = {
