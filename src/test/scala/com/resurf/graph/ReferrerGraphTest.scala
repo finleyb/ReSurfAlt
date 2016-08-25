@@ -39,6 +39,8 @@ class ReferrerGraphTest extends TestTemplate {
       val urlf = new URL(prepareURLString("http://www.f.com"))
       val baseTime = Time.fromMilliseconds(0)
       val defaultStorageSize = 4000.bytes
+      val defaultContentType = "text/html"
+      val defaultHTTPMethod = "GET"
     }
 
   test("Graph check handing of an empty graph (no nodes or edges)") {
@@ -51,7 +53,7 @@ class ReferrerGraphTest extends TestTemplate {
 
   test("Graph check that request with no referrer adds request to repo but does not add node or link") {
     val f = fixture
-    val requests = List(WebRequest(f.baseTime, "GET", f.urla, None, "text/html", f.defaultStorageSize))
+    val requests = List(WebRequest(f.baseTime, f.defaultHTTPMethod, f.urla, None, f.defaultContentType, f.defaultStorageSize))
     requests.foreach { request => f.graph.processRequest(request) }
 
     f.graph.edgeCount should be (0)
@@ -63,8 +65,8 @@ class ReferrerGraphTest extends TestTemplate {
   test("Graph check handing duplicate request") {
     val f = fixture
 
-    val requests = List(WebRequest(f.baseTime, "GET", f.urla, None, "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime, "GET", f.urla, None, "text/html", f.defaultStorageSize))
+    val requests = List(WebRequest(f.baseTime, f.defaultHTTPMethod, f.urla, None, f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime, f.defaultHTTPMethod, f.urla, None, f.defaultContentType, f.defaultStorageSize))
 
     requests.foreach { request => f.graph.processRequest(request) }
 
@@ -79,9 +81,9 @@ class ReferrerGraphTest extends TestTemplate {
     val f = fixture
 
     val requests = List(
-      WebRequest(f.baseTime, "GET", f.urla, None, "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 300.millis, "GET", f.urlb, None, "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 400.millis, "GET", f.urlc, None, "text/html", f.defaultStorageSize))
+      WebRequest(f.baseTime, f.defaultHTTPMethod, f.urla, None, f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 300.millis, f.defaultHTTPMethod, f.urlb, None, f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 400.millis, f.defaultHTTPMethod, f.urlc, None, f.defaultContentType, f.defaultStorageSize))
 
     requests.foreach { request => f.graph.processRequest(request) }
     val headNodes = f.graph.getHeadNodes
@@ -99,13 +101,13 @@ class ReferrerGraphTest extends TestTemplate {
 
     val requests = List(
       //create a disconnected head node so that the entire graph has at least one
-      WebRequest(f.baseTime, "GET", f.urla, None, "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 300.millis, "GET", f.urlb, Some(f.urla), "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 400.millis, "GET", f.urlc, Some(f.urla), "text/html", f.defaultStorageSize),
+      WebRequest(f.baseTime, f.defaultHTTPMethod, f.urla, None, f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 300.millis, f.defaultHTTPMethod, f.urlb, Some(f.urla), f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 400.millis, f.defaultHTTPMethod, f.urlc, Some(f.urla), f.defaultContentType, f.defaultStorageSize),
       //create a cycle
-      WebRequest(f.baseTime, "GET", f.urld, None, "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 300.millis, "GET", f.urle, Some(f.urld), "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 400.millis, "GET", f.urld, Some(f.urle), "text/html", f.defaultStorageSize))
+      WebRequest(f.baseTime, f.defaultHTTPMethod, f.urld, None, f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 300.millis, f.defaultHTTPMethod, f.urle, Some(f.urld), f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 400.millis, f.defaultHTTPMethod, f.urld, Some(f.urle), f.defaultContentType, f.defaultStorageSize))
 
     requests.foreach { request => f.graph.processRequest(request) }
 
@@ -125,8 +127,8 @@ class ReferrerGraphTest extends TestTemplate {
 
     val f = fixture
 
-    val requests = List(WebRequest(f.baseTime, "GET", f.urla, None, "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 5.seconds, "GET", f.urla, Some(f.urla), "text/html", f.defaultStorageSize))
+    val requests = List(WebRequest(f.baseTime, f.defaultHTTPMethod, f.urla, None, f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 5.seconds, f.defaultHTTPMethod, f.urla, Some(f.urla), f.defaultContentType, f.defaultStorageSize))
 
     requests.foreach { request => f.graph.processRequest(request) }
 
@@ -141,13 +143,13 @@ class ReferrerGraphTest extends TestTemplate {
     val f = fixture
 
     val requests = List(
-      WebRequest(f.baseTime, "GET", f.urlb, Some(f.urla), "text/html", f.defaultStorageSize),
-      WebRequest(f.baseTime + 400.millis, "GET", f.urla, None, "text/html", f.defaultStorageSize))
+      WebRequest(f.baseTime, f.defaultHTTPMethod, f.urlb, Some(f.urla), f.defaultContentType, f.defaultStorageSize),
+      WebRequest(f.baseTime + 400.millis, f.defaultHTTPMethod, f.urla, None, f.defaultContentType, f.defaultStorageSize))
 
     requests.foreach { request => f.graph.processRequest(request) }
     val nodea = f.graph.getNode(f.urla.toString()).value
     nodea.timeGapAvg should be(None)
-    
+
     val edgeab = f.graph.getEdge(f.graph.getLinkIdAsString(f.urla.toString, f.urlb.toString)).value
     edgeab.timeGapAvg should be(None)
   }

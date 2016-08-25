@@ -56,7 +56,7 @@ class ReSurfNode(graph: AbstractGraph, id: String) extends MultiNode(graph: Abst
     val reqsToParentNodes = parentNodeSet.toList.flatMap { node => node.requestRepo.getRepo }
     //incoming requests excluding those without referrer (since these won't be able to be matched)
     val reqsToNodeSorted = getEnteringEdgeSet[ReSurfEdge].asScala.flatMap { edge => edge.requestRepo.getRepo }.toSeq.sorted
-    (!reqsToParentNodes.isEmpty && !reqsToNodeSorted.isEmpty) match {
+    (reqsToParentNodes.nonEmpty && reqsToNodeSorted.nonEmpty) match {
       case false => None
       case true =>
         reqsToParentNodes.flatMap { parentReq => RequestRepository.getDurationToNextRequest(parentReq, reqsToNodeSorted).toList } match {
@@ -147,7 +147,7 @@ extends AbstractEdge(id: String, source: AbstractNode, target: AbstractNode, dir
   def timeGapAvg: Option[Duration] = {
     val reqsToSourceNode = getSourceNode[ReSurfNode].requestRepo.getRepo
     val reqstoTargetNodeSorted = requestRepo.getRepo.toSeq.sorted
-    (!reqsToSourceNode.isEmpty && !reqstoTargetNodeSorted.isEmpty) match {
+    (reqsToSourceNode.nonEmpty && reqstoTargetNodeSorted.nonEmpty) match {
       case false => None
       case true =>
         reqsToSourceNode.flatMap {reqToSourceNode => RequestRepository.getDurationToNextRequest(reqToSourceNode, reqstoTargetNodeSorted).toList } match {

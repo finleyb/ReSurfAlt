@@ -43,7 +43,7 @@ package object common {
 
   /**
    * Calculates the mode of an collection of objects
-   * 
+   *
    * @param list the collection of objects
    * @return the mode object
    */
@@ -57,35 +57,35 @@ package object common {
 
   /**
    * Calculates the average duration from a sequence of durations
-   * 
+   *
    * @param data the sequence of durations
    * @return the average duration
    */
   def averageDuration(data: Seq[Duration]): Option[Duration] = {
-  	if(!data.isEmpty){
-  		Some(Duration.fromNanoseconds(data.map(_.inNanoseconds).sum / data.size))
-  	}else{
-  		None
-  	}
+    if(data.nonEmpty){
+      Some(Duration.fromNanoseconds(data.map(_.inNanoseconds).sum / data.size))
+    }else{
+      None
+    }
   }
-  
+
   /**
    * Calculates the average duration from a sequence of durations
-   * 
+   *
    * @param data the sequence of durations
    * @return the average duration
    */
   def averageStorageSize(data: Seq[StorageUnit]): Option[StorageUnit] = {
-  	if(!data.isEmpty){
-  		Some(new StorageUnit(data.map(_.inBytes).sum/data.size))
-  	}else{
-  		None
-  	}
+    if(data.nonEmpty){
+      Some(new StorageUnit(data.map(_.inBytes).sum/data.size))
+    }else{
+      None
+    }
   }
 
   /**
    * Prepares a URL string for comparison against other URL string by decoding the URL encoding, downcasing, and finally striping trailing slashes
-   * 
+   *
    * @param str the URL string to prepare
    * @return the prepared URL string
    */

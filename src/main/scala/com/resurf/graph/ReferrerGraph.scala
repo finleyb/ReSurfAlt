@@ -44,14 +44,18 @@ class ReferrerGraph(id: String) {
   //set the node factory to the custom node class
   internalGraph.setNodeFactory(new NodeFactory[ReSurfNode] {
     def newInstance(id: String, graph: Graph): ReSurfNode = {
-      new ReSurfNode(graph.asInstanceOf[AbstractGraph], id)
+      graph match {
+        case graph:AbstractGraph => new ReSurfNode(graph, id)
+      }
     }
   })
 
   //set the edge factory to the custom edge class
   internalGraph.setEdgeFactory(new EdgeFactory[ReSurfEdge] {
     def newInstance(id: String, src: Node, dst: Node, directed: Boolean): ReSurfEdge = {
-      new ReSurfEdge(id, src.asInstanceOf[AbstractNode], dst.asInstanceOf[AbstractNode], directed)
+      (src,dst) match {
+        case (src:AbstractNode,dst:AbstractNode) => new ReSurfEdge(id, src, dst, directed)
+      }
     }
   });
 
@@ -62,7 +66,7 @@ class ReferrerGraph(id: String) {
    * @param dst the id of the destination node of the link
    * @return the link id
    */
-  def getLinkIdAsString(src: String, dst: String): String = src.toString + "->" + dst.toString
+  def getLinkIdAsString(src: String, dst: String): String = src + "->" + dst
 
   /**
    * Add a node to the referrer graph based on the specified RequestSummary
@@ -89,7 +93,7 @@ class ReferrerGraph(id: String) {
         }
     }
   }
-  
+
   /**
    * Get a node by id
    *
@@ -138,8 +142,8 @@ class ReferrerGraph(id: String) {
     match {
       case None =>
         logger.debug(s"New edge from $srcId to $dstId")
-        internalGraph.addEdge(edgeId.toString, srcId, dstId, true)
-        val e = internalGraph.getEdge[ReSurfEdge](edgeId.toString)
+        internalGraph.addEdge(edgeId, srcId, dstId, true)
+        val e = internalGraph.getEdge[ReSurfEdge](edgeId)
         e.requestRepo.add(details)
       //else add the request summary to the link's request repo
       case Some(edge) =>
@@ -149,7 +153,7 @@ class ReferrerGraph(id: String) {
 
   /**
    * Get a summary of the referrer graph
-   * 
+   *
    * @return a graph summary for the referrer graph
    */
   def getGraphSummary: GraphSummary = {
@@ -163,7 +167,7 @@ class ReferrerGraph(id: String) {
 
   /**
    * Processes the specified web request by creating the specific node(s) and link in the referrer graph
-   * 
+   *
    * @param newEvent the HTTP request to process
    */
   def processRequest(newEvent: WebRequest): Unit = {
@@ -193,8 +197,6 @@ class ReferrerGraph(id: String) {
       (!URI_KEYWORDS.exists(node.parametersMode.getOrElse("").contains))
   }
 
-  //def getInternalGraph:Graph = internalGraph
-
   /**
    * Get the head node that each node maps to according to the ReSurf methodology.
    * Headnodes naturally map to themselves. Nodes that are not head nodes and do not map to a
@@ -217,16 +219,21 @@ class ReferrerGraph(id: String) {
         case Some(node) => {
           //node is head node thus we found the headnode to map to!
           if (headNodes.contains(node)) {
+            logger.debug("Found headnode " + node.getId)
             Some(node)
             //else if node still has incoming edges and we haven't take all of them yet then follow the shortest one backward
-          } else if (node.getInDegree > 0 && node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}.size > 0) {
+          } else if (node.getInDegree > 0 && node.getEachEnteringEdge[ReSurfEdge].asScala.count{node => !takenEdgeIDs.contains(node.getId)} > 0) {
             val enteringEdgesNotTaken = node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}
             val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy{edge => edge.timeGapAvg.getOrElse(Duration.Top)}
             takenEdgeIDs += smallestEdgeNotTaken.getId
-            val sourceNodeOfShortestEdgeNotTaken = Some(smallestEdgeNotTaken.getSourceNode[ReSurfNode])
-            traverseToHeadNode(sourceNodeOfShortestEdgeNotTaken)
+            val sourceNodeOfShortestEdgeNotTaken = smallestEdgeNotTaken.getSourceNode[ReSurfNode]
+            logger.debug("Found an edge to take backwards through node " + sourceNodeOfShortestEdgeNotTaken.getId)
+            traverseToHeadNode(Some(sourceNodeOfShortestEdgeNotTaken))
             //node is not a headnode and does not have any incoming edges or untaken incoming edges thus is classified as unknown
-          } else { None }
+          } else {
+            logger.debug("Could not find a headnode and there are no more unvisited edges to take")
+            None
+          }
         }
         case None => throw new Exception("A node along the chain is null, this should never happen!")
       }
@@ -235,6 +242,7 @@ class ReferrerGraph(id: String) {
     val nonHeadNodes = internalGraph.getNodeSet[ReSurfNode].asScala.toSet.diff(headNodes)
     //call the function for each node that is not a headnode
     nonHeadNodes.map { node =>
+      logger.debug("Starting traversal to find headnode for node " + node.getId)
       //reset the taken edge set for each node
       takenEdgeIDs = Set.empty[String]
       (node, traverseToHeadNode(Some(node)))
@@ -245,13 +253,13 @@ class ReferrerGraph(id: String) {
 
   /**
    * Get the nodes that are considered head nodes through the ReSurf methodology
-   * 
+   *
    * @return the head nodes
    */
   def getHeadNodes: Set[ReSurfNode] = {
 
     val nodes = internalGraph.getNodeSet[ReSurfNode].asScala
-    var total_HN = Set[ReSurfNode]()
+    var total_HN = Set.empty[ReSurfNode]
 
     val initial_HN = nodes.filter { node =>
       //check to make sure that node has no referrer (parent node)
