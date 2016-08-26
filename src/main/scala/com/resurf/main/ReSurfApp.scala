@@ -18,8 +18,9 @@
 package com.resurf.main
 
 import java.net.URL
-import com.resurf.graph.{ ReSurfNode, ReferrerGraph,ReSurfEdge }
-import com.twitter.util.{ Time, Duration }
+import com.resurf.graph.{ ReSurfNode, ReferrerGraph, ReSurfEdge }
+import com.resurf.etl.Converters
+import com.twitter.util.{ Time, Duration, StorageUnit }
 import com.twitter.conversions.time._
 import com.twitter.conversions.storage._
 import com.resurf.common._
@@ -29,11 +30,21 @@ object ReSurfApp {
 
   def main(args: Array[String]) {
 
+    //  val mitmproxy_header_file = io.Source.fromFile(args(0))
+    //  val mitmproxy_header_file_lines = mitmproxy_header_file.getLines().toList
+    //  mitmproxy_header_file.close
+    //
+    //  val requests = mitmproxy_header_file_lines.map{line => Converters.customMITMProxy2WebEvent(line)}
+    //  val graph = new ReferrerGraph("graph-name")
+    //  requests.foreach{request => graph.processRequest(request)}
+    //  val headNodes = graph.getHeadNodes
+    //  headNodes.foreach {node => println(node.getId)}
+
     //Demonstrate the scenario presented in the ReSurf research paper (ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6663499)
     val START_TIME = 1000000
     val HTTP_METHOD = "GET"
-    val CONTENT_TYPE = "text/html"
-    val SIZE = 4000.bytes
+    val CONTENT_TYPE = Some("text/html")
+    val SIZE = Some(4000.bytes)
 
     val now = Time.fromMilliseconds(START_TIME)
     val url1 = new URL(prepareURLString("http://www.cnn.com"))
@@ -48,27 +59,25 @@ object ReSurfApp {
     val url10 = new URL(prepareURLString("http://s0.2mdn.net/300x250.swf"))
 
     val requests = List(WebRequest(now, HTTP_METHOD, url1, None, CONTENT_TYPE, SIZE),
-    WebRequest(now + 500.millis, HTTP_METHOD, url3, Some(url1),CONTENT_TYPE, SIZE),
-    WebRequest(now + 700.millis, HTTP_METHOD, url4, Some(url3), CONTENT_TYPE, SIZE),
-    WebRequest(now + 300.millis, HTTP_METHOD, url5, Some(url1), CONTENT_TYPE, SIZE),
-    WebRequest(now + 400.millis, HTTP_METHOD, url6, Some(url1), CONTENT_TYPE, SIZE),
-    WebRequest(now + 700.millis, HTTP_METHOD, url7, Some(url6), CONTENT_TYPE, SIZE),
-    WebRequest(now + 1000.seconds, HTTP_METHOD, url2, None, CONTENT_TYPE, SIZE),
-    WebRequest(now + 1000.seconds + 900.millis, HTTP_METHOD, url5, Some(url2), CONTENT_TYPE, SIZE),
-    WebRequest(now + 1000.seconds + 1100.millis, HTTP_METHOD, url6, Some(url2), CONTENT_TYPE, SIZE),
-    WebRequest(now + 1000.seconds + 1300.millis, HTTP_METHOD, url7, Some(url6), CONTENT_TYPE, SIZE),
-    WebRequest(now + 1000.seconds + 35.seconds, HTTP_METHOD, url8, Some(url2), CONTENT_TYPE, SIZE),
-    WebRequest(now + 1000.seconds + 35.seconds + 100.millis, HTTP_METHOD, url9, Some(url8), CONTENT_TYPE, SIZE),
-    WebRequest(now + 1000.seconds + 35.seconds + 200.millis, HTTP_METHOD, url10, Some(url8), CONTENT_TYPE, SIZE))
+      WebRequest(now + 500.millis, HTTP_METHOD, url3, Some(url1), CONTENT_TYPE, SIZE),
+      WebRequest(now + 700.millis, HTTP_METHOD, url4, Some(url3), CONTENT_TYPE, SIZE),
+      WebRequest(now + 300.millis, HTTP_METHOD, url5, Some(url1), CONTENT_TYPE, SIZE),
+      WebRequest(now + 400.millis, HTTP_METHOD, url6, Some(url1), CONTENT_TYPE, SIZE),
+      WebRequest(now + 700.millis, HTTP_METHOD, url7, Some(url6), CONTENT_TYPE, SIZE),
+      WebRequest(now + 1000.seconds, HTTP_METHOD, url2, None, CONTENT_TYPE, SIZE),
+      WebRequest(now + 1000.seconds + 900.millis, HTTP_METHOD, url5, Some(url2), CONTENT_TYPE, SIZE),
+      WebRequest(now + 1000.seconds + 1100.millis, HTTP_METHOD, url6, Some(url2), CONTENT_TYPE, SIZE),
+      WebRequest(now + 1000.seconds + 1300.millis, HTTP_METHOD, url7, Some(url6), CONTENT_TYPE, SIZE),
+      WebRequest(now + 1000.seconds + 35.seconds, HTTP_METHOD, url8, Some(url2), CONTENT_TYPE, SIZE),
+      WebRequest(now + 1000.seconds + 35.seconds + 100.millis, HTTP_METHOD, url9, Some(url8), CONTENT_TYPE, SIZE),
+      WebRequest(now + 1000.seconds + 35.seconds + 200.millis, HTTP_METHOD, url10, Some(url8), CONTENT_TYPE, SIZE))
 
     val graph = new ReferrerGraph("graph-name")
-    requests.foreach{request => graph.processRequest(request)}
+    requests.foreach { request => graph.processRequest(request) }
 
     //val headNodes = graph.getHeadNodes
     //headNodes.foreach { node => println(node.getId) }
-
-    graph.assignNodesToHeadNodes.foreach{case(node,headNode) => println(node.getId + " --- " + headNode.getOrElse("Unknown"))}
+    graph.assignNodesToHeadNodes.foreach { case (node, headNode) => println(node.getId + " --- " + headNode.getOrElse("Unknown")) }
 
   }
 }
-

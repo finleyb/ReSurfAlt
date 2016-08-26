@@ -45,8 +45,8 @@ case class RequestSummary(ts: Time, method: String, parameters: Option[String], 
  * @param size the content size of the reply of the request
  * @param rawContent the raw content of the request (defaults to None)
  */
-case class WebRequest(ts: Time, method: String, url: URL, referrer: Option[URL],contentType: String, size: StorageUnit, rawContent: Option[String] = None) {
-  def getSummary: RequestSummary = RequestSummary(ts, method, Option(url.getQuery), Option(contentType),Option(size))
+case class WebRequest(ts: Time, method: String, url: URL, referrer: Option[URL],contentType: Option[String], size: Option[StorageUnit], rawContent: Option[String] = None) {
+  def getSummary: RequestSummary = RequestSummary(ts, method, Option(url.getQuery), contentType, size)
 }
 
 /**

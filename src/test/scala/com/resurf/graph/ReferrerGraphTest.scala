@@ -38,8 +38,8 @@ class ReferrerGraphTest extends TestTemplate {
       val urle = new URL(prepareURLString("http://www.e.com"))
       val urlf = new URL(prepareURLString("http://www.f.com"))
       val baseTime = Time.fromMilliseconds(0)
-      val defaultStorageSize = 4000.bytes
-      val defaultContentType = "text/html"
+      val defaultStorageSize = Some(4000.bytes)
+      val defaultContentType = Some("text/html")
       val defaultHTTPMethod = "GET"
     }
 
