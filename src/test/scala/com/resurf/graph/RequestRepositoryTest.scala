@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2015 Original Work Marios Iliofotou
+ *
  * This file is part of ReSurfAlt.
  *
  * ReSurfAlt is free software: you can redistribute it and/or modify

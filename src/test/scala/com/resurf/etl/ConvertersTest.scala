@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2015 Original Work Marios Iliofotou
+ *
  * This file is part of ReSurfAlt.
  *
  * ReSurfAlt is free software: you can redistribute it and/or modify
@@ -18,13 +20,11 @@
 package com.resurf.etl
 
 import java.net.URL
-
+import Converters._
 import com.resurf.common.TestTemplate
 
 
 class ConvertersTest extends TestTemplate {
-
-  import Converters._
 
   test("Basic URL parsing") {
     val url1 = "http://www.ninja.com/a/hello.js?a=2&b=3"

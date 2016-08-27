@@ -1,4 +1,6 @@
 /*
+ * Copyright (C) 2016 Original Work Benjamin Finley
+ *
  * This file is part of ReSurfAlt.
  *
  * ReSurfAlt is free software: you can redistribute it and/or modify

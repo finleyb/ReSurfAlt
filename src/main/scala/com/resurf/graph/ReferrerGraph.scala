@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2015 Original Work Marios Iliofotou
+ * Copyright (C) 2016 Modified Work Benjamin Finley
+ *
  * This file is part of ReSurfAlt.
  *
  * ReSurfAlt is free software: you can redistribute it and/or modify
@@ -19,7 +22,7 @@ package com.resurf.graph
 
 import java.lang
 import com.resurf.common._
-import com.twitter.util.{Duration, StorageUnit}
+import com.twitter.util.{Time, Duration, StorageUnit}
 import org.graphstream.graph.{ Graph, EdgeFactory, NodeFactory, Node }
 import org.graphstream.graph.implementations.{ MultiGraph, AbstractEdge, AbstractNode, AbstractGraph }
 import org.graphstream.algorithm.ConnectedComponents
@@ -39,7 +42,8 @@ class ReferrerGraph(id: String) {
 
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   //the internal graphstream multigraph that holds our custom nodes and edges
-  private val internalGraph: Graph = new MultiGraph("RG:" + id, false, true)
+  private val internalGraph: Graph = new MultiGraph("RG:" + id, false, true,
+      DEFAULT_REFERRER_GRAPH_NODE_CAPACITY,DEFAULT_REFERRER_GRAPH_EDGE_CAPACITY)
 
   //set the node factory to the custom node class
   internalGraph.setNodeFactory(new NodeFactory[ReSurfNode] {
@@ -56,27 +60,18 @@ class ReferrerGraph(id: String) {
   });
 
   /**
-   * Get the link id based on the source and destination node ids
-   *
-   * @param src the id of the source node of the link
-   * @param dst the id of the destination node of the link
-   * @return the link id
-   */
-  def getLinkIdAsString(src: String, dst: String): String = src + "->" + dst
-
-  /**
    * Add a node to the referrer graph based on the specified RequestSummary
    *
    * @param nodeId the id of the node (typically the URL of the request)
    * @param details the request summary object of the request
    */
-  def addNode(nodeId: String, details: Option[RequestSummary] = None): Unit = {
+  private def addNode(nodeId: String, details: Option[RequestSummary] = None): Unit = {
     details match {
       case None =>
         internalGraph.addNode(nodeId)
         ()
       case Some(request) =>
-        logger.debug(s"Adding node $nodeId with details $details")
+        logger.debug("Adding node " + nodeId + " with details " +  details)
         //node is not in internalGraph
         Option(internalGraph.getNode[ReSurfNode](nodeId)) match {
           case None =>
@@ -126,9 +121,9 @@ class ReferrerGraph(id: String) {
    * @param dstId the id of the destination node (typically the target URI of the request)
    * @param details the request summary object of the request
    */
-  def addLink(srcId: String, dstId: String, details: RequestSummary): Unit = {
+  private def addLink(srcId: String, dstId: String, details: RequestSummary): Unit = {
     logger.debug(s"Adding edge from $srcId to $dstId")
-    val edgeId = getLinkIdAsString(srcId, dstId)
+    val edgeId = ReferrerGraph.getLinkIdAsString(srcId, dstId)
     this.addNode(srcId)
     //nodes store their incoming requests as the repository
     this.addNode(dstId, Some(details))
@@ -157,7 +152,7 @@ class ReferrerGraph(id: String) {
   }
 
   /** Display the referrer graph */
-  def viz: Viewer = internalGraph.display()
+  def visualize: Viewer = internalGraph.display()
 
   /**
    * Processes the specified web request by creating the specific node(s) and link in the referrer graph
@@ -173,7 +168,7 @@ class ReferrerGraph(id: String) {
       case Some(referrer) =>
         //check to make sure the url and referrer are not the same since this causes self-loop
         if (referrer.equals(newEvent.url)) {
-        	//if they are the same then simply remove the referrer
+          //if they are the same then simply remove the referrer
           val newEventCopyWOReferrer = newEvent.copy(referrer = None)
           addNode(newEventCopyWOReferrer.url.toString, Some(newEventCopyWOReferrer.getSummary))
         } else {
@@ -207,7 +202,7 @@ class ReferrerGraph(id: String) {
     var takenEdgeIDs = Set.empty[String]
 
     //define recursive function that traverses backward toward the head node
-    lazy val traverseToHeadNode: Option[ReSurfNode] => Option[ReSurfNode] =
+    def traverseToHeadNode: Option[ReSurfNode] => Option[ReSurfNode] =
       //use memoization from scalaz to improve performance
       Memo.mutableHashMapMemo {
         case Some(node) => {
@@ -246,6 +241,18 @@ class ReferrerGraph(id: String) {
   }
 
   /**
+   * Get the browsing behavior of the user according to the ReSurf methodology
+   * In terms of the referrer graph this consists of all requests to headnodes ordered by time
+   *
+   * @return the browsing of the user according to the ReSurf methodology
+   */
+  def getUserBrowsing: Seq[Tuple2[Time,String]] = {
+    val headNodes = getHeadNodes.toList
+    val requests = headNodes.flatMap{node => node.requestRepo.getRepo.map{request => (request.ts,node.getId)}}
+    requests.toSeq.sortBy(request => request._1)
+  }
+
+  /**
    * Get the nodes that are considered head nodes through the ReSurf methodology
    *
    * @return the head nodes
@@ -277,4 +284,16 @@ class ReferrerGraph(id: String) {
     }
     total_HN
   }
+}
+
+/** The companion object of a request repository */
+object ReferrerGraph {
+  /**
+   * Get the link id based on the source and destination node ids
+   *
+   * @param src the id of the source node of the link
+   * @param dst the id of the destination node of the link
+   * @return the link id
+   */
+  def getLinkIdAsString(src: String, dst: String): String = src + "->" + dst
 }

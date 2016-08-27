@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2015 Original Work Marios Iliofotou
+ * Copyright (C) 2016 Modified Work Benjamin Finley
+ *
  * This file is part of ReSurfAlt.
  *
  * ReSurfAlt is free software: you can redistribute it and/or modify
@@ -41,7 +44,10 @@ package object common {
   val DEFAULT_NODE_RESPONSE_SIZE = StorageUnit.infinite
   val DEFAULT_NODE_AVG_TIME_GAP = Duration.Top
   val DEFAULT_NODE_URI_KEYWORDS = ""
-  
+
+  val DEFAULT_REFERRER_GRAPH_NODE_CAPACITY = 1024
+  val DEFAULT_REFERRER_GRAPH_EDGE_CAPACITY = 2048
+
   //This variable controls the default edge time gap when that time gap cannot be calculated, for instance when
   //all of the requests to the source node of the edge were before the actual edge requests.
   //This should not be changed unless you know what you are doing.

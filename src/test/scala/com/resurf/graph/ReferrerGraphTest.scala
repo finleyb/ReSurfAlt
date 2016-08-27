@@ -1,4 +1,7 @@
 /*
+ * Copyright (C) 2015 Original Work Marios Iliofotou
+ * Copyright (C) 2016 Modified Work Benjamin Finley
+ *
  * This file is part of ReSurfAlt.
  *
  * ReSurfAlt is free software: you can redistribute it and/or modify
@@ -150,7 +153,7 @@ class ReferrerGraphTest extends TestTemplate {
     val nodea = f.graph.getNode(f.urla.toString()).value
     nodea.timeGapAvg should be(None)
 
-    val edgeab = f.graph.getEdge(f.graph.getLinkIdAsString(f.urla.toString, f.urlb.toString)).value
+    val edgeab = f.graph.getEdge(ReferrerGraph.getLinkIdAsString(f.urla.toString, f.urlb.toString)).value
     edgeab.timeGapAvg should be(None)
   }
 }
