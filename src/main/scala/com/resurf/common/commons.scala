@@ -22,6 +22,7 @@ package com.resurf.common
 
 import java.net.URL
 import com.twitter.util.{Duration, Time, StorageUnit}
+import com.resurf.graph.ReSurfNode
 
 /**
  * A summary of a web (HTTP) request
@@ -61,3 +62,11 @@ case class WebRequest(ts: Time, method: String, url: URL, referrer: Option[URL],
  * @param connectedComponentCount the number of connected components of the graph
  */
 case class GraphSummary(nodeCount: Int, linkCount: Int, connectedComponentCount: Int)
+
+/**
+ * A set of criteria for classifying a node as a headnode
+ *
+ * @param nodeLocalCriteria criteria for classifying a node as a headnode that can be applied without graph traversal
+ * @param headNodeReferrerMustBeHeadnode whether to classify a node as a headnode at least one of that nodes referrers must also a headnode
+ */
+case class ReSurfHeadNodeSelectionCriteria(nodeLocalCriteria:List[(ReSurfNode) => Boolean],headNodeReferrerMustBeHeadnode:Boolean)

@@ -28,12 +28,13 @@ import com.twitter.conversions.storage._
 import com.resurf.common._
 import collection.JavaConverters._
 import org.scalatest.OptionValues._
+import com.resurf.strategies.ReSurf
 
 class ReferrerGraphTest extends TestTemplate {
 
   def fixture =
     new {
-      val graph = new ReferrerGraph("graph-name")
+      val graph = new ReferrerGraph("graph-name",ReSurf.OriginalReSurfHeadNodeConditions)
       val urla = new URL(prepareURLString("http://www.a.com"))
       val urlb = new URL(prepareURLString("http://www.b.com"))
       val urlc = new URL(prepareURLString("http://www.c.com"))

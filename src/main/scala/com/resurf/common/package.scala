@@ -25,36 +25,19 @@ import java.net.URLDecoder
 import com.twitter.conversions.time._
 import com.twitter.conversions.storage._
 import java.io.{PrintWriter,File}
+import com.resurf.graph.ReSurfNode
 
 /** Contains common utility methods and Constants */
 package object common {
 
-  //These variables determine which nodes are classified as head nodes.
-  //The current values are directly from the ReSurf methodology paper.
-  val VALID_HEADNODE_CONTENT_TYPES = Set("text/html", "text/xhtml", "text/xml", "application/xhtml", "application/xml")
-  val MIN_HEADNODE_RESPONSE_SIZE = 3000.bytes
-  val MIN_HEADNODE_EMBEDDED_OBJECTS = 2.0
-  val MIN_HEADNODE_AVG_TIME_GAP = 500.millis
-  val NONHEADNODE_URI_KEYWORDS = Set("adserver", "ads", "widget", "embed", "banner")
-
-  //These variables control the default values for nodes where this information is missing, thus depending
-  //on these defaults the methodology can be more aggressive or more conservative in classifying nodes as headnodes.
-  //The current default values are based on the most aggressive classification.
-  val DEFAULT_NODE_CONTENT_TYPE = "text/html"
-  val DEFAULT_NODE_RESPONSE_SIZE = StorageUnit.infinite
-  val DEFAULT_NODE_AVG_TIME_GAP = Duration.Top
-  val DEFAULT_NODE_URI_KEYWORDS = ""
-
-  val DEFAULT_REFERRER_GRAPH_NODE_CAPACITY = 1024
-  val DEFAULT_REFERRER_GRAPH_EDGE_CAPACITY = 2048
-
+  val DefaultReferrerGraphNodeCapacity = 1024
+  val DefaultReferrerGraphEdgeCapacity = 2048
+  
   //This variable controls the default edge time gap when that time gap cannot be calculated, for instance when
   //all of the requests to the source node of the edge were before the actual edge requests.
   //This should not be changed unless you know what you are doing.
-  val DEFAULT_EDGE_AVG_TIME_GAP = Duration.Top
-
-  val VALID_HTTP_METHODS = Set("GET","POST","HEAD","PUT","OPTIONS","TRACE","DELETE","CONNECT","PATCH")
-
+  val DefaultEdgeAvgTimeGap = Duration.Top
+  
   def writeDataToDisk[T](data: Seq[T], fname: String):Unit = {
     val pw = new PrintWriter(new File(fname))
     data.foreach(x => pw.write(x + "\n"))

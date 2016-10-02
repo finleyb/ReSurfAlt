@@ -38,12 +38,12 @@ import scalaz.Memo
  * @constructor create a new referrer graph with the specified identifier
  * @param id the identifier
  */
-class ReferrerGraph(id: String) {
+class ReferrerGraph(id: String, headNodeSelectionCriteria:ReSurfHeadNodeSelectionCriteria) {
 
   private[this] lazy val logger = LoggerFactory.getLogger(this.getClass)
   //the internal graphstream multigraph that holds our custom nodes and edges
   private val internalGraph: Graph = new MultiGraph("RG:" + id, false, true,
-      DEFAULT_REFERRER_GRAPH_NODE_CAPACITY,DEFAULT_REFERRER_GRAPH_EDGE_CAPACITY)
+      DefaultReferrerGraphNodeCapacity,DefaultReferrerGraphEdgeCapacity)
 
   //set the node factory to the custom node class
   internalGraph.setNodeFactory(new NodeFactory[ReSurfNode] {
@@ -179,11 +179,7 @@ class ReferrerGraph(id: String) {
   }
 
   private def candidateHNCriteria(node: ReSurfNode): Boolean = {
-    VALID_HEADNODE_CONTENT_TYPES.contains(node.contentTypeMode.getOrElse(DEFAULT_NODE_CONTENT_TYPE)) &&
-      node.contentSizeAvg.getOrElse(DEFAULT_NODE_RESPONSE_SIZE) >= MIN_HEADNODE_RESPONSE_SIZE &&
-      node.getOutDegree >= MIN_HEADNODE_EMBEDDED_OBJECTS &&
-      node.timeGapAvg.getOrElse(DEFAULT_NODE_AVG_TIME_GAP) >= MIN_HEADNODE_AVG_TIME_GAP &&
-      (!NONHEADNODE_URI_KEYWORDS.exists(node.parametersMode.getOrElse(DEFAULT_NODE_URI_KEYWORDS).contains))
+    headNodeSelectionCriteria.nodeLocalCriteria.map(cond => cond(node)).forall(identity)
   }
 
   /**
@@ -211,9 +207,9 @@ class ReferrerGraph(id: String) {
             logger.debug("Found headnode " + node.getId)
             Some(node)
             //else if node still has incoming edges and we haven't take all of them yet then follow the shortest one backward
-          } else if (node.getInDegree > 0 && node.getEachEnteringEdge[ReSurfEdge].asScala.count{node => !takenEdgeIDs.contains(node.getId)} > 0) {
-            val enteringEdgesNotTaken = node.getEachEnteringEdge[ReSurfEdge].asScala.filter{node => !takenEdgeIDs.contains(node.getId)}
-            val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy{edge => edge.timeGapAvg.getOrElse(DEFAULT_EDGE_AVG_TIME_GAP)}
+          } else if (node.getInDegree > 0 && node.getEachEnteringEdge[ReSurfEdge].asScala.count{edge => !takenEdgeIDs.contains(edge.getId)} > 0) {
+            val enteringEdgesNotTaken = node.getEachEnteringEdge[ReSurfEdge].asScala.filter{edge => !takenEdgeIDs.contains(edge.getId)}
+            val smallestEdgeNotTaken = enteringEdgesNotTaken.minBy{edge => edge.timeGapAvg.getOrElse(DefaultEdgeAvgTimeGap)}
             takenEdgeIDs += smallestEdgeNotTaken.getId
             val sourceNodeOfShortestEdgeNotTaken = smallestEdgeNotTaken.getSourceNode[ReSurfNode]
             logger.debug("Found an edge to take backwards through node " + sourceNodeOfShortestEdgeNotTaken.getId)
@@ -260,29 +256,33 @@ class ReferrerGraph(id: String) {
   def getHeadNodes: Set[ReSurfNode] = {
 
     val nodes = internalGraph.getNodeSet[ReSurfNode].asScala
-    var total_HN = Set.empty[ReSurfNode]
+    var totalHeadnodes = Set.empty[ReSurfNode]
 
-    val initial_HN = nodes.filter { node =>
+    if(headNodeSelectionCriteria.headNodeReferrerMustBeHeadnode){
+      val initialHeadNodes = nodes.filter { node =>
       //check to make sure that node has no referrer (parent node)
       candidateHNCriteria(node) && node.getInDegree == 0
-    }.toSet
-
-    var last_HN = initial_HN
-    total_HN ++= last_HN
-
-    while (last_HN.size > 0) {
-
-      //get the candidate children and make sure the candidate children are not already head nodes
-      //(this could happen in case of graph cycle)
-      val children_of_last_HN = last_HN.flatMap { node => node.childNodeSet }.toSet.diff(total_HN)
-
-      last_HN = children_of_last_HN.filter { node =>
-        //check to make sure at least one of the referrer (parent) nodes is a head node
-        candidateHNCriteria(node) && total_HN.intersect(node.parentNodeSet).size > 0
       }.toSet
-      total_HN ++= last_HN
+
+      var lastFoundHeadNodes = initialHeadNodes
+      totalHeadnodes ++= lastFoundHeadNodes
+
+      while (lastFoundHeadNodes.size > 0) {
+        //get the candidate children and make sure the candidate children are not already head nodes
+        //(this could happen in case of graph cycle)
+        val childrenOfLastFoundHeadNodes = lastFoundHeadNodes.flatMap { node => node.childNodeSet }.toSet.diff(totalHeadnodes)
+
+        lastFoundHeadNodes = childrenOfLastFoundHeadNodes.filter { node =>
+          //check to make sure at least one of the referrer (parent) nodes is a head node
+          candidateHNCriteria(node) && totalHeadnodes.intersect(node.parentNodeSet).size > 0
+        }.toSet
+        totalHeadnodes ++= lastFoundHeadNodes
+      }
+
+    }else{
+      totalHeadnodes = nodes.filter{node => candidateHNCriteria(node)}.toSet
     }
-    total_HN
+    totalHeadnodes
   }
 }
 

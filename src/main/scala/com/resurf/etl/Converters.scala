@@ -41,14 +41,14 @@ object Converters {
 
   def customMITMProxy2WebEvent(logLine: String): WebRequest =
     logLine.split("\t", -1).map(_.trim) match {
-      case Array(raw_time, raw_method, raw_url, raw_referrer, raw_content_type, raw_size, code) =>
-        val time = Time.fromMilliseconds((raw_time.toDouble * 1000.0).toLong)
-        val method = raw_method
-        val url = new URL(prepareURLString(raw_url))
-        val referrer = { if (raw_referrer.isEmpty) { None } else { Some(new URL(prepareURLString(raw_referrer))) } }
-        val content_type = { if (raw_content_type.isEmpty) { None } else { Some(raw_content_type.takeWhile(_ != ';')) } }
-        val size = { if (raw_size.isEmpty) { None } else { Some(new StorageUnit(raw_size.toLong)) } }
-        WebRequest(time, method, url, referrer, content_type, size)
+      case Array(rawTime, rawMethod, rawURL, rawReferrer, rawContentType, rawSize, code) =>
+        val time = Time.fromMilliseconds((rawTime.toDouble * 1000.0).toLong)
+        val method = rawMethod
+        val url = new URL(prepareURLString(rawURL))
+        val referrer = { if (rawReferrer.isEmpty) { None } else { Some(new URL(prepareURLString(rawReferrer))) } }
+        val contentType = { if (rawContentType.isEmpty) { None } else { Some(rawContentType.takeWhile(_ != ';')) } }
+        val size = { if (rawSize.isEmpty) { None } else { Some(new StorageUnit(rawSize.toLong)) } }
+        WebRequest(time, method, url, referrer, contentType, size)
     }
 
 }
